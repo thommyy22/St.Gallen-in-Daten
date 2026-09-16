@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>St.Gallen in Daten</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   St.Gallen in Daten — Design tokens
+   ============================================================ */
+:root{
+  --black:#000000;
+  --white:#FFFFFF;
+  --accent:#44AA6D;
+  --accent-10: rgba(68,170,109,0.10);
+  --accent-20: rgba(68,170,109,0.20);
+  --line-faint: rgba(0,0,0,0.07);
+  --line: rgba(0,0,0,0.16);
+  --line-strong: rgba(0,0,0,0.4);
+  --ink-70: rgba(0,0,0,0.7);
+  --ink-55: rgba(0,0,0,0.55);
+  --ink-40: rgba(0,0,0,0.4);
+  --font-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-fraktur: 'UnifrakturMaguntia', 'UnifrakturCook', cursive;
+  --edge: clamp(20px, 5vw, 64px);
+  --col-count: 12;
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:auto; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+}
+
+body{
+  margin:0;
+  background:var(--white);
+  color:var(--black);
+  font-family:var(--font-sans);
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+::selection{ background:var(--accent); color:var(--white); }
+
+a{ color:inherit; }
+
+/* ============================================================
+   Grid overlay — persistent Swiss coordinate system
+   ============================================================ */
+.grid-overlay{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  display:flex;
+  padding:0 var(--edge);
+}
+.grid-overlay .col{
+  flex:1 1 0;
+  border-right:1px solid var(--line-faint);
+  height:100%;
+}
+.grid-overlay .col:first-child{ border-left:1px solid var(--line-faint); }
+
+.navbar-bg{
+  position:fixed;
+  top:0; left:0; right:0;
+  height:54px;
+  background:rgba(255,255,255,0.78);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+  z-index:45;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.35s ease;
+}
+.navbar-bg.visible{ opacity:1; }
+.hud{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  pointer-events:none;
+  font-family:var(--font-mono);
+  font-size:0.68rem;
+  letter-spacing:0.04em;
+  color:var(--ink-55);
+}
+.hud-corner{
+  position:absolute;
+  display:flex;
+  gap:6px;
+  align-items:center;
+  padding:16px var(--edge);
+}
+.hud-tl{ top:0; left:0; opacity:0; transition:opacity 0.35s ease; }
+.hud-tl.visible{ opacity:1; }
+.hud-tr{ top:0; right:0; }
+.hud-sep{ opacity:0.5; }
+.hud-brand{
+  display:inline-flex;
+  align-items:center;
+  gap:0.18em;
+  font-family:var(--font-fraktur);
+  font-weight:400;
+  font-size:0.95rem;
+  color:var(--black);
+  white-space:nowrap;
+}
+.hud-brand .wappen-svg{ height:1.1em; width:auto; flex:none; display:block; }
+@media (max-width: 640px){
+  .navbar-bg{ height:46px; }
+  .hud-corner{ padding:12px 16px; font-size:0.6rem; }
+  .hud-brand{ font-size:0.82rem; }
+}
+
+.railnav{
+  position:fixed;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+}
+.railnav::before{
+  content:"";
+  position:absolute;
+  top:-20px; bottom:-20px;
+  left:50%;
+  width:1px;
+  background:var(--line);
+  z-index:-1;
+}
+.railnav-dot{
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--white);
+  border:1px solid var(--line-strong);
+  padding:0;
+  cursor:pointer;
+  transition:background 0.25s, border-color 0.25s, transform 0.25s;
+}
+.railnav-dot:hover{ transform:scale(1.3); }
+.railnav-dot.active{ background:var(--accent); border-color:var(--accent); }
+@media (max-width: 900px){ .railnav{ display:none; } }
+
+/* ============================================================
+   Type
+   ============================================================ */
+.chapter-index{
+  font-family:var(--font-mono);
+  font-size:0.85rem;
+  letter-spacing:0.05em;
+  color:var(--ink-55);
+  display:block;
+  margin-bottom:10px;
+}
+.chapter-title{
+  font-family:var(--font-fraktur);
+  font-size:clamp(2.4rem, 5.8vw, 4.8rem);
+  font-weight:400;
+  letter-spacing:0;
+  line-height:1.05;
+  margin:0 0 0.9em 0;
+}
+.chapter-intro{
+  font-size:clamp(1rem, 1.6vw, 1.25rem);
+  font-weight:400;
+  line-height:1.5;
+  max-width:34ch;
+  color:var(--ink-70);
+  margin:0 0 0.6em 0;
+}
+.chapter-hint{
+  font-family:var(--font-mono);
+  font-size:0.72rem;
+  color:var(--ink-40);
+  letter-spacing:0.02em;
+}
+
+.badge-demo{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:0.62rem;
+  letter-spacing:0.06em;
+  color:var(--ink-55);
+  border:1px solid var(--line-strong);
+  padding:3px 7px;
+  white-space:nowrap;
+}
+
+.num-huge{
+  font-weight:800;
+  letter-spacing:-0.03em;
+  line-height:0.86;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ============================================================
+   Layout shell
+   ============================================================ */
+main{ position:relative; z-index:1; }
+.chapter{
+  position:relative;
+  padding:0 var(--edge);
+  border-top:1px solid var(--line);
+  scroll-margin-top:54px;
+}
+.chapter-head{
+  padding-top:clamp(48px, 8vw, 96px);
+  padding-bottom:clamp(24px, 4vw, 40px);
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{
+  position:relative;
+  z-index:1;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  padding:0 var(--edge);
+}
+.hero-inner{ padding-top:64px; padding-bottom:64px; max-width:920px; }
+.hero-title{
+  font-size:clamp(3.2rem, 11vw, 8.6rem);
+  font-weight:900;
+  letter-spacing:-0.03em;
+  line-height:1.15;
+  margin:0 0 0.5em 0;
+}
+.hero-line1{
+  display:inline-flex;
+  align-items:center;
+  gap:0.18em;
+  font-family:var(--font-fraktur);
+  font-weight:400;
+  font-size:1.08em;
+  letter-spacing:0;
+}
+.wappen-svg{ height:0.8em; width:auto; flex:none; display:block; }
+.hero-sub{
+  font-size:clamp(1rem, 2vw, 1.35rem);
+  font-weight:500;
+  margin:0 0 1.6em 0;
+  color:var(--ink-70);
+}
+.hero-intro{
+  font-size:clamp(0.95rem, 1.4vw, 1.1rem);
+  line-height:1.6;
+  max-width:46ch;
+  color:var(--ink-70);
+  margin:0 0 2.6em 0;
+}
+.hero-span{
+  border-top:1px solid var(--line);
+  padding-top:1.2em;
+  display:inline-block;
+}
+.hero-span-years{
+  font-size:clamp(2rem, 5.4vw, 3.6rem);
+  font-weight:800;
+  letter-spacing:-0.02em;
+  line-height:1;
+}
+.hero-span-years .arrow{ color:var(--accent); padding:0 0.15em; }
+.hero-span-label{
+  font-family:var(--font-mono);
+  font-size:0.78rem;
+  letter-spacing:0.03em;
+  color:var(--ink-55);
+  margin-top:0.6em;
+}
+.scroll-cue{
+  position:absolute;
+  bottom:36px;
+  left:var(--edge);
+  font-family:var(--font-mono);
+  font-size:0.68rem;
+  letter-spacing:0.08em;
+  color:var(--ink-40);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.scroll-cue-line{
+  width:1px; height:28px;
+  background:var(--line-strong);
+  animation:scrollpulse 2.4s ease-in-out infinite;
+}
+@keyframes scrollpulse{
+  0%,100%{ transform:scaleY(1); opacity:0.5; }
+  50%{ transform:scaleY(1.4); opacity:1; }
+}
+
+/* ============================================================
+   SECTION 01 — DIE STADT (scroll-scrubbed population line)
+   ============================================================ */
+.scrub-track{ position:relative; height:320vh; }
+.scrub-sticky{
+  position:sticky;
+  top:0;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding-top:64px;
+  padding-bottom:6vh;
+}
+.chart-frame{ position:relative; width:100%; }
+#popChart{ width:100%; height:auto; overflow:visible; }
+.pop-line-context{ fill:none; stroke:var(--line-strong); stroke-width:1; }
+.pop-line-active{ fill:none; stroke:var(--black); stroke-width:2.25; }
+.pop-line-active.pre{ stroke-dasharray:4,4; opacity:0.55; }
+.pop-area-active{ fill:var(--accent); opacity:0.08; }
+.pop-playhead{ stroke:var(--accent); stroke-width:1.5; }
+.pop-axis-line{ stroke:var(--line); stroke-width:1; }
+.pop-tick text{ font-family:var(--font-mono); font-size:11px; fill:var(--ink-55); }
+.pop-tick line{ stroke:var(--line); }
+.pop-dot{ fill:var(--white); stroke:var(--accent); stroke-width:2; }
+
+.readout{
+  display:flex;
+  align-items:baseline;
+  gap:clamp(16px,3vw,36px);
+  flex-wrap:wrap;
+  margin-top:clamp(18px,3vw,32px);
+}
+.readout-year{
+  font-family:var(--font-mono);
+  font-size:clamp(1.1rem,2vw,1.4rem);
+  color:var(--accent);
+  font-weight:500;
+}
+.readout-value{
+  font-size:clamp(2.6rem,7vw,5.6rem);
+  font-weight:800;
+  letter-spacing:-0.02em;
+  font-variant-numeric:tabular-nums;
+}
+.readout-delta{
+  font-family:var(--font-mono);
+  font-size:0.85rem;
+  color:var(--ink-55);
+}
+.readout-delta .up{ color:var(--accent); }
+.readout-delta .down{ color:#B0413E; }
+
+.year-slider{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  max-width:560px;
+  height:1px;
+  background:var(--line-strong);
+  margin-top:clamp(20px,3vw,32px);
+  outline:none;
+}
+.year-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px; height:14px;
+  border-radius:50%;
+  background:var(--white);
+  border:2px solid var(--black);
+  cursor:pointer;
+  transition:background 0.15s, border-color 0.15s;
+}
+.year-slider::-webkit-slider-thumb:hover{ border-color:var(--accent); }
+.year-slider::-moz-range-thumb{
+  width:12px; height:12px;
+  border-radius:50%;
+  background:var(--white);
+  border:2px solid var(--black);
+  cursor:pointer;
+}
+.year-slider::-moz-range-track{ height:1px; background:var(--line-strong); }
+
+.badge-demo.floating{
+  position:absolute;
+  bottom:26px; right:0;
+}
+
+/* ============================================================
+   SECTION 02 — QUARTIERE
+   ============================================================ */
+.quartiere-wrap{
+  position:relative;
+  margin-bottom:clamp(20px,3vw,32px);
+}
+#quartiereMap{
+  width:100%;
+  height:100%;
+  display:block;
+  overflow:visible;
+}
+.qcell{
+  stroke:var(--black);
+  stroke-width:0.75;
+  cursor:pointer;
+  transition:fill-opacity 0.2s;
+}
+.qcell-label{
+  font-family:var(--font-mono);
+  font-size:9.5px;
+  fill:var(--ink-55);
+  pointer-events:none;
+  text-anchor:middle;
+}
+.qcell-label.small{ font-size:8px; }
+
+.quartier-tooltip{
+  position:fixed;
+  pointer-events:none;
+  z-index:60;
+  background:var(--white);
+  border:1px solid var(--black);
+  padding:10px 14px;
+  font-family:var(--font-mono);
+  font-size:0.72rem;
+  line-height:1.6;
+  min-width:180px;
+  opacity:0;
+  transform:translate(-50%,-120%);
+  transition:opacity 0.12s;
+}
+.quartier-tooltip.visible{ opacity:1; }
+.quartier-tooltip .t-name{ font-weight:600; color:var(--black); letter-spacing:0.02em; }
+.quartier-tooltip .t-row{ display:flex; justify-content:space-between; gap:16px; color:var(--ink-55); }
+.quartier-tooltip .t-row span:last-child{ color:var(--black); }
+
+.quartier-panel{
+  position:fixed;
+  right:0; top:0; bottom:0;
+  width:min(380px, 100%);
+  background:var(--white);
+  border-left:1px solid var(--black);
+  z-index:70;
+  padding:28px 28px;
+  transform:translateX(100%);
+  transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;
+}
+.quartier-panel.open{ transform:translateX(0); }
+.qp-close{
+  background:none; border:1px solid var(--line-strong);
+  width:32px; height:32px; cursor:pointer;
+  font-family:var(--font-mono); font-size:0.9rem;
+  margin-bottom:32px;
+}
+.qp-close:hover{ border-color:var(--black); }
+.qp-kreis{ font-family:var(--font-mono); font-size:0.68rem; color:var(--ink-55); letter-spacing:0.06em; margin-bottom:6px; }
+.qp-name{ font-size:clamp(1.6rem,4vw,2.2rem); font-weight:800; letter-spacing:-0.01em; line-height:1.05; margin-bottom:22px; }
+.qp-value{ font-size:clamp(2.6rem,6vw,3.6rem); font-weight:800; letter-spacing:-0.02em; margin-bottom:2px; }
+.qp-label{ font-family:var(--font-mono); font-size:0.72rem; color:var(--ink-55); margin-bottom:20px; }
+.qp-delta{ font-family:var(--font-mono); font-size:0.85rem; margin-bottom:28px; }
+.qp-delta .up{ color:var(--accent); }
+.qp-delta .down{ color:#B0413E; }
+.qp-meta{ display:flex; gap:24px; margin-bottom:28px; }
+.qp-meta div{ font-family:var(--font-mono); font-size:0.68rem; color:var(--ink-55); }
+.qp-meta strong{ display:block; font-family:var(--font-sans); font-size:1rem; color:var(--black); font-weight:600; margin-top:4px; }
+.qp-spark{ width:100%; height:70px; }
+.qp-spark path.line{ fill:none; stroke:var(--black); stroke-width:1.5; }
+.qp-spark path.area{ fill:var(--accent-10); stroke:none; }
+.qp-spark-label{ font-family:var(--font-mono); font-size:0.62rem; color:var(--ink-40); margin-top:8px; }
+
+.map-caption{
+  font-family:var(--font-mono);
+  font-size:0.7rem;
+  color:var(--ink-40);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+.legend-swatch{
+  display:inline-block;
+  width:9px; height:9px;
+  background:var(--accent);
+  margin-right:-2px;
+}
+
+/* ============================================================
+   SECTION 03 — ALTER
+   ============================================================ */
+.age-viz-wrap{ max-width:520px; margin:0 auto clamp(28px,5vw,48px) auto; }
+#ageChart{ width:100%; height:auto; display:block; }
+.age-dot{ fill:var(--black); }
+.age-stackbar{
+  width:100%;
+  border-top:1px solid var(--line);
+  padding-bottom:clamp(40px,6vw,72px);
+}
+.age-stackbar-band{
+  position:relative;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 2px;
+  overflow:hidden;
+  transition:height 0.55s cubic-bezier(.4,0,.2,1);
+}
+.age-stackbar-band.hi{ background:var(--accent-10); }
+.asb-name{ font-size:clamp(0.88rem,1.6vw,1.05rem); color:var(--ink-70); }
+.asb-pct{ font-family:var(--font-mono); font-size:clamp(1.2rem,3.6vw,2.1rem); font-weight:500; font-variant-numeric:tabular-nums; }
+.age-stackbar-band.hi .asb-pct{ color:var(--accent); }
+
+/* ============================================================
+   SECTION 04 — WOHNEN
+   ============================================================ */
+.housing-stats{
+  display:flex; gap:clamp(24px,5vw,64px); flex-wrap:wrap;
+  margin-bottom:clamp(28px,5vw,48px);
+}
+.hstat-label{ font-family:var(--font-mono); font-size:0.68rem; color:var(--ink-55); margin-bottom:6px; }
+.hstat-value{ font-size:clamp(1.8rem,3.6vw,2.8rem); font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.hstat-value.accent{ color:var(--accent); }
+.housing-legend{ margin-top:0; margin-bottom:clamp(20px,3vw,28px); }
+.housing-grid{
+  display:flex;
+  align-items:flex-end;
+  gap:3px;
+  height:220px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:0;
+  margin-bottom:clamp(32px,5vw,56px);
+  overflow:hidden;
+}
+.hbar{
+  flex:1 1 0;
+  min-width:2px;
+  background:var(--black);
+  transition:height 0.5s cubic-bezier(.4,0,.2,1), background 0.3s;
+}
+.hbar.new{ background:var(--accent); }
+
+/* ============================================================
+   SECTION 05 — ARBEIT
+   ============================================================ */
+#econChart{ width:100%; height:auto; display:block; flex-shrink:0; margin-bottom:clamp(16px,3vw,28px); }
+.econ-rect{ fill:var(--white); stroke:var(--black); stroke-width:1; transition:fill 0.15s; }
+.econ-rect:hover{ fill:var(--accent-10); }
+.econ-label-name{ font-size:12px; fill:var(--black); pointer-events:none; }
+.econ-label-pct{ font-family:var(--font-mono); font-weight:600; pointer-events:none; }
+
+/* ============================================================
+   SECTION 06 — VERÄNDERUNG
+   ============================================================ */
+.timeline-wrap{ padding:clamp(24px,5vw,56px) 0 clamp(48px,7vw,80px) 0; }
+.timeline-track{
+  position:relative;
+  height:2px;
+  background:var(--line-strong);
+  margin:0 4px clamp(40px,6vw,64px) 4px;
+  cursor:pointer;
+}
+.timeline-tick{
+  position:absolute;
+  top:-4px;
+  width:1px; height:10px;
+  background:var(--line-strong);
+}
+.timeline-tick-label{
+  position:absolute;
+  top:14px;
+  transform:translateX(-50%);
+  font-family:var(--font-mono);
+  font-size:0.72rem;
+  color:var(--ink-55);
+  white-space:nowrap;
+}
+.timeline-handle{
+  position:absolute;
+  top:50%;
+  width:20px; height:20px;
+  margin-left:-10px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--white);
+  border:2px solid var(--black);
+  cursor:grab;
+  touch-action:none;
+}
+.timeline-handle:active{ cursor:grabbing; border-color:var(--accent); }
+.timeline-handle::after{
+  content:attr(data-year);
+  position:absolute;
+  top:-34px; left:50%;
+  transform:translateX(-50%);
+  font-family:var(--font-mono);
+  font-weight:600;
+  font-size:0.95rem;
+  white-space:nowrap;
+}
+.sync-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+}
+@media (min-width:960px){
+  .sync-grid{ grid-template-columns:repeat(5,1fr); }
+}
+.sync-cell{
+  background:var(--white);
+  padding:18px 20px;
+}
+.sync-cell .sc-label{ font-family:var(--font-mono); font-size:0.66rem; color:var(--ink-55); display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.sync-cell .sc-label .arrow{ color:var(--accent); }
+.sync-cell .sc-value{ font-size:1.5rem; font-weight:700; letter-spacing:-0.01em; font-variant-numeric:tabular-nums; }
+
+/* ============================================================
+   SECTION 07 — DATENPORTRAIT
+   ============================================================ */
+.portrait{
+  position:relative;
+  padding-top:clamp(48px,8vw,96px);
+  padding-bottom:clamp(64px,10vw,120px);
+  overflow:hidden;
+}
+.portrait-bg{
+  position:absolute;
+  inset:0;
+  opacity:0.05;
+  pointer-events:none;
+}
+.portrait-title{
+  font-size:clamp(2.6rem,7vw,5.6rem);
+  font-weight:900;
+  letter-spacing:-0.03em;
+  line-height:0.9;
+  margin-bottom:clamp(32px,6vw,64px);
+  position:relative;
+}
+.portrait-title .fraktur{
+  font-family:var(--font-fraktur);
+  font-weight:400;
+  font-size:1.1em;
+  display:inline-flex;
+  align-items:center;
+  gap:0.13em;
+}
+.portrait-title .wappen-svg{ height:0.78em; width:auto; }
+.portrait-grid{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  position:relative;
+}
+.pg-cell{ background:var(--white); padding:22px 20px; }
+.pg-cell.big{ grid-column:span 8; grid-row:span 2; display:flex; flex-direction:column; padding:32px 28px; }
+.pg-cell.big .pg-value{ margin-top:auto; }
+.pg-cell.med{ grid-column:span 4; }
+.pg-cell.small{ grid-column:span 3; }
+.pg-label{ font-family:var(--font-mono); font-size:0.68rem; color:var(--ink-55); margin-bottom:10px; }
+.pg-value{ font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.pg-cell.big .pg-value{ font-size:clamp(3.4rem,8vw,6.4rem); line-height:0.88; }
+.pg-cell.med .pg-value{ font-size:clamp(1.8rem,3.4vw,2.6rem); }
+.pg-cell.small .pg-value{ font-size:clamp(1.4rem,2.6vw,2rem); }
+@media (max-width:760px){
+  .portrait-grid{ grid-template-columns:repeat(2,1fr); }
+  .pg-cell.big{ grid-column:span 2; }
+  .pg-cell.med{ grid-column:span 2; }
+  .pg-cell.small{ grid-column:span 1; }
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer{
+  position:relative; z-index:1;
+  border-top:1px solid var(--line);
+  padding:clamp(32px,5vw,48px) var(--edge);
+  display:flex;
+  justify-content:space-between;
+  gap:24px;
+  flex-wrap:wrap;
+}
+.footer-note{
+  font-size:0.85rem;
+  line-height:1.6;
+  color:var(--ink-55);
+  max-width:52ch;
+}
+.footer-meta{
+  font-family:var(--font-mono);
+  font-size:0.68rem;
+  color:var(--ink-40);
+  text-align:right;
+}
+@media (max-width:640px){ .footer-meta{ text-align:left; } }
+
+@media (max-width:640px){
+  .quartier-panel{ width:100%; }
+  .qcell-label{ display:none; }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-overlay" id="gridOverlay" aria-hidden="true"></div>
+
+<div class="navbar-bg" id="navbarBg" aria-hidden="true"></div>
+<div class="hud" aria-hidden="true">
+  <div class="hud-corner hud-tl" id="hudTl">
+    <span class="hud-brand">
+      <span>St.Gallen</span>
+      <svg class="wappen-svg" viewBox="-5 -5 365.66667 457.65568" aria-hidden="true" focusable="false"><g stroke="#000000" stroke-width="4.5" fill="#000000"><path d="M 2.5,2.5 h 349 V 176.2 C 351.5,293.6 320,395 177,443.35 34,395 2.5,293.6 2.5,176.2 z" stroke-width="5" /><path d="M 168.6,35.7 a 8.45,7.5 0 0,1 16.8,0 V 411.5 a 8.45,7.5 0 0,1 -16.8,0 z" fill="#FFFFFF" /><path d="M 144.75,369.3 a 7.45,7.2 0 0,1 -14.9,0 V 114.6 a 7.45,6.4 0 0,1 14.9,0 V 367.9 a 9.375,8.9 0 0,0 18.75,0 V 116.2 a 9.375,8.4 0 0,0 -18.75,0 M 209.25,369.3 a 7.45,7.2 0 0,0 14.9,0 V 114.6 a 7.45,6.4 0 0,0 -14.9,0 V 367.9 a 9.375,8.9 0 0,1 -18.75,0 V 116.2 a 9.375,8.4 0 0,1 18.75,0 M 163.5,119 A 13.5,11.5 0 0 1 190.5,119 L 190.5,366 A 13.5,11 0 0 1 163.5,366 M 198,77.6 V 49.8 H 173 c -25,-0.2 -38.5,-13 -49.4,-27.2 -6.9,13.6 -8.9,22 -9.2,34.8 0.4,15 2.2,24.1 11,40 13.9,-14.2 26.7,-19.5 46.3,-19.8 z" fill="#FFFFFF" /><path d="M 125.5,131 l 103,0 0,22 -103,0 z M 125.5,331.7 l 103,0 0,22 -103,0 z M 125.5,319.5 l 1.5,0 101.5,-120.5 0,-33.7 -1.5,0 -101.5,120.5 z" stroke="#FFFFFF" stroke-linejoin="round" /><path d="M 125.5,165.3 l 1.5,0 101.5,120.5 0,33.7 -1.5,0 -101.5,-120.5 z" stroke="#FFFFFF" stroke-linejoin="round" /></g></svg>
+    </span>
+    <span class="hud-sep">/</span>
+    <span>In Daten</span>
+  </div>
+  <div class="hud-corner hud-tr"><span id="hudSection">— / 07</span></div>
+</div>
+
+<nav class="railnav" aria-hidden="true" id="railnav">
+  <button class="railnav-dot" data-target="hero" aria-label="Intro"></button>
+  <button class="railnav-dot" data-target="s01" aria-label="01"></button>
+  <button class="railnav-dot" data-target="s02" aria-label="02"></button>
+  <button class="railnav-dot" data-target="s03" aria-label="03"></button>
+  <button class="railnav-dot" data-target="s04" aria-label="04"></button>
+  <button class="railnav-dot" data-target="s05" aria-label="05"></button>
+  <button class="railnav-dot" data-target="s06" aria-label="06"></button>
+  <button class="railnav-dot" data-target="s07" aria-label="07"></button>
+</nav>
+
+<header class="hero" id="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title"><span class="hero-line1"><span>St.Gallen</span><svg class="wappen-svg" viewBox="-5 -5 365.66667 457.65568" aria-hidden="true" focusable="false"><g stroke="#000000" stroke-width="4.5" fill="#000000"><path d="M 2.5,2.5 h 349 V 176.2 C 351.5,293.6 320,395 177,443.35 34,395 2.5,293.6 2.5,176.2 z" stroke-width="5" /><path d="M 168.6,35.7 a 8.45,7.5 0 0,1 16.8,0 V 411.5 a 8.45,7.5 0 0,1 -16.8,0 z" fill="#FFFFFF" /><path d="M 144.75,369.3 a 7.45,7.2 0 0,1 -14.9,0 V 114.6 a 7.45,6.4 0 0,1 14.9,0 V 367.9 a 9.375,8.9 0 0,0 18.75,0 V 116.2 a 9.375,8.4 0 0,0 -18.75,0 M 209.25,369.3 a 7.45,7.2 0 0,0 14.9,0 V 114.6 a 7.45,6.4 0 0,0 -14.9,0 V 367.9 a 9.375,8.9 0 0,1 -18.75,0 V 116.2 a 9.375,8.4 0 0,1 18.75,0 M 163.5,119 A 13.5,11.5 0 0 1 190.5,119 L 190.5,366 A 13.5,11 0 0 1 163.5,366 M 198,77.6 V 49.8 H 173 c -25,-0.2 -38.5,-13 -49.4,-27.2 -6.9,13.6 -8.9,22 -9.2,34.8 0.4,15 2.2,24.1 11,40 13.9,-14.2 26.7,-19.5 46.3,-19.8 z" fill="#FFFFFF" /><path d="M 125.5,131 l 103,0 0,22 -103,0 z M 125.5,331.7 l 103,0 0,22 -103,0 z M 125.5,319.5 l 1.5,0 101.5,-120.5 0,-33.7 -1.5,0 -101.5,120.5 z" stroke="#FFFFFF" stroke-linejoin="round" /><path d="M 125.5,165.3 l 1.5,0 101.5,120.5 0,33.7 -1.5,0 -101.5,-120.5 z" stroke="#FFFFFF" stroke-linejoin="round" /></g></svg></span><br>In Daten</h1>
+    <p class="hero-sub">Eine visuelle Geschichte über die Stadt im Wandel.</p>
+    <p class="hero-intro">Wie verändert sich eine Stadt über Jahrzehnte? Bevölkerung, Quartiere, Wohnen, Arbeit und Mobilität hinterlassen Spuren in den Daten.</p>
+    <div class="hero-span">
+      <div class="hero-span-years">1981<span class="arrow">→</span>2025</div>
+      <div class="hero-span-label">44 Jahre Stadtentwicklung</div>
+    </div>
+  </div>
+  <div class="scroll-cue"><span>Scrollen</span><span class="scroll-cue-line"></span></div>
+</header>
+
+<main>
+
+  <!-- 01 — DIE STADT -->
+  <section class="chapter" id="s01" data-chapter="01">
+    <div class="chapter-head">
+      <span class="chapter-index">01 / Die Stadt</span>
+      <h2 class="chapter-title">Bevölkerung<br>in Bewegung</h2>
+      <p class="chapter-intro">Eine Linie durch 44 Jahre — Rückgang in den Neunzigern, Wachstum seit 2010. Werte ab 2008 effektiv, davor modelliert.</p>
+      <p class="chapter-hint">Scrollen oder den Regler bewegen, um durch die Jahre zu gehen.</p>
+    </div>
+    <div class="scrub-track" id="s01track">
+      <div class="scrub-sticky">
+        <div class="chart-frame">
+          <svg id="popChart" viewBox="0 0 1000 420" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="readout">
+          <div class="readout-year" id="popYearLabel">2025</div>
+          <div class="readout-value num-huge" id="popValueLabel">81'800</div>
+          <div class="readout-delta" id="popDeltaLabel">Einwohner</div>
+        </div>
+        <input type="range" id="popSlider" class="year-slider" min="1981" max="2025" step="1" value="2025" aria-label="Jahr wählen">
+        <span class="badge-demo floating" id="popSourceBadge">Effektive Daten (Amt für Statistik SG)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 — DIE QUARTIERE -->
+  <section class="chapter" id="s02" data-chapter="02">
+    <div class="chapter-head">
+      <span class="chapter-index">02 / Die Quartiere</span>
+      <h2 class="chapter-title">14 Quartier&shy;gruppen</h2>
+      <p class="chapter-intro">31 statistische Quartiere, jedes mit eigenem Muster aus Dichte und Wachstum.</p>
+      <p class="chapter-hint">Berühren oder klicken für das Datenprofil eines Quartiers.</p>
+    </div>
+    <div class="quartiere-wrap">
+      <svg id="quartiereMap" viewBox="0 0 1000 650"></svg>
+    </div>
+    <p class="map-caption">Stilisierte Kartendarstellung, nicht massstabsgetreu. Bevölkerung ab 2008 effektiv (Amt für Daten und Statistik Kanton St.Gallen), davor modelliert.<span class="badge-demo">Fläche: Schätzung</span></p>
+  </section>
+
+  <!-- 03 — WER LEBT HIER -->
+  <section class="chapter" id="s03" data-chapter="03">
+    <div class="chapter-head">
+      <span class="chapter-index">03 / Wer lebt hier?</span>
+      <h2 class="chapter-title">Die Form<br>der Bevölkerung</h2>
+      <p class="chapter-intro">Jeder Punkt steht für einen Bevölkerungsanteil. Die Struktur verschiebt sich mit dem gewählten Jahr.</p>
+    </div>
+    <div class="age-viz-wrap">
+      <svg id="ageChart" viewBox="0 0 560 380" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="age-stackbar" id="ageStackbar"></div>
+  </section>
+
+  <!-- 04 — WOHNEN -->
+  <section class="chapter" id="s04" data-chapter="04">
+    <div class="chapter-head">
+      <span class="chapter-index">04 / Wohnen</span>
+      <h2 class="chapter-title">Digitale<br>Stadtarchitektur</h2>
+      <p class="chapter-intro">Jedes Feld steht für eine Einheit Wohnraum. Mit jedem Jahr verdichtet sich die Struktur.</p>
+      <p class="chapter-hint">Scrollen oder den Regler bewegen, um durch die Jahre zu gehen.</p>
+    </div>
+    <div class="scrub-track" id="s04track">
+      <div class="scrub-sticky">
+        <div class="housing-stats">
+          <div><div class="hstat-label">Jahr</div><div class="hstat-value accent" id="hYear">—</div></div>
+          <div><div class="hstat-label">Wohnungen total</div><div class="hstat-value" id="hUnits">—</div></div>
+          <div><div class="hstat-label">Ø Zimmer je Wohnung</div><div class="hstat-value" id="hRooms">—</div></div>
+          <div><div class="hstat-label">Neubauten seit 5 Jahren</div><div class="hstat-value" id="hNew">—</div></div>
+        </div>
+        <p class="map-caption housing-legend">Jede Säule ≈ 500 Wohnungen, der Reihe nach aufgefüllt · <span class="legend-swatch"></span>Neubauten der letzten 5 Jahre</p>
+        <div class="housing-grid" id="housingGrid"></div>
+        <input type="range" id="housingSlider" class="year-slider" min="1981" max="2025" step="1" value="2025" aria-label="Jahr wählen">
+        <span class="badge-demo floating">Concept / Demo Data</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 — ARBEIT -->
+  <section class="chapter" id="s05" data-chapter="05">
+    <div class="chapter-head">
+      <span class="chapter-index">05 / Arbeit</span>
+      <h2 class="chapter-title">Wirtschaft&shy;struktur</h2>
+      <p class="chapter-intro">Die Fläche jedes Feldes zeigt den Anteil der Branche an allen Arbeitsplätzen.</p>
+      <p class="chapter-hint">Scrollen oder den Regler bewegen, um durch die Jahre zu gehen.</p>
+    </div>
+    <div class="scrub-track" id="s05track">
+      <div class="scrub-sticky">
+        <div class="housing-stats">
+          <div><div class="hstat-label">Jahr</div><div class="hstat-value accent" id="econYear">—</div></div>
+          <div><div class="hstat-label">Arbeitsplätze gesamt</div><div class="hstat-value" id="econTotal">—</div></div>
+        </div>
+        <svg id="econChart" viewBox="0 0 1000 480" preserveAspectRatio="none"></svg>
+        <input type="range" id="econSlider" class="year-slider" min="1981" max="2025" step="1" value="2025" aria-label="Jahr wählen">
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 — VERÄNDERUNG -->
+  <section class="chapter" id="s06" data-chapter="06">
+    <div class="chapter-head">
+      <span class="chapter-index">06 / Veränderung</span>
+      <h2 class="chapter-title">Ein Zeit&shy;mechanismus<br>für die ganze Seite</h2>
+      <p class="chapter-intro">Die Auswahl hier wirkt auf alle vorherigen Visualisierungen — Bevölkerung, Quartiere, Alter, Wohnen und Arbeit.</p>
+      <p class="chapter-hint">Scrollen oder den Punkt auf der Zeitachse ziehen.</p>
+    </div>
+    <div class="scrub-track" id="s06track">
+      <div class="scrub-sticky">
+        <div class="timeline-wrap">
+          <div class="timeline-track" id="timelineTrack">
+            <div class="timeline-handle" id="timelineHandle" data-year="2025"></div>
+          </div>
+          <div class="sync-grid">
+            <div class="sync-cell"><div class="sc-label"><span class="arrow">→</span>Bevölkerung</div><div class="sc-value" id="syncPop">—</div></div>
+            <div class="sync-cell"><div class="sc-label"><span class="arrow">→</span>Arbeitsplätze</div><div class="sc-value" id="syncJobs">—</div></div>
+            <div class="sync-cell"><div class="sc-label"><span class="arrow">→</span>Wohnungen</div><div class="sc-value" id="syncHousing">—</div></div>
+            <div class="sync-cell"><div class="sc-label"><span class="arrow">→</span>Anteil 65+</div><div class="sc-value" id="syncAge">—</div></div>
+            <div class="sync-cell"><div class="sc-label"><span class="arrow">→</span>Stärkstes Wachstum</div><div class="sc-value" id="syncGrowth">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 — DATENPORTRAIT -->
+  <section class="chapter portrait" id="s07" data-chapter="07">
+    <svg class="portrait-bg" id="portraitBg" viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid slice"></svg>
+    <div class="chapter-head" style="padding-bottom:0;">
+      <span class="chapter-index">07 / Datenportrait</span>
+    </div>
+    <h2 class="portrait-title"><span class="fraktur">St.Gallen<svg class="wappen-svg" viewBox="-5 -5 365.66667 457.65568" aria-hidden="true" focusable="false"><g stroke="#000000" stroke-width="4.5" fill="#000000"><path d="M 2.5,2.5 h 349 V 176.2 C 351.5,293.6 320,395 177,443.35 34,395 2.5,293.6 2.5,176.2 z" stroke-width="5" /><path d="M 168.6,35.7 a 8.45,7.5 0 0,1 16.8,0 V 411.5 a 8.45,7.5 0 0,1 -16.8,0 z" fill="#FFFFFF" /><path d="M 144.75,369.3 a 7.45,7.2 0 0,1 -14.9,0 V 114.6 a 7.45,6.4 0 0,1 14.9,0 V 367.9 a 9.375,8.9 0 0,0 18.75,0 V 116.2 a 9.375,8.4 0 0,0 -18.75,0 M 209.25,369.3 a 7.45,7.2 0 0,0 14.9,0 V 114.6 a 7.45,6.4 0 0,0 -14.9,0 V 367.9 a 9.375,8.9 0 0,1 -18.75,0 V 116.2 a 9.375,8.4 0 0,1 18.75,0 M 163.5,119 A 13.5,11.5 0 0 1 190.5,119 L 190.5,366 A 13.5,11 0 0 1 163.5,366 M 198,77.6 V 49.8 H 173 c -25,-0.2 -38.5,-13 -49.4,-27.2 -6.9,13.6 -8.9,22 -9.2,34.8 0.4,15 2.2,24.1 11,40 13.9,-14.2 26.7,-19.5 46.3,-19.8 z" fill="#FFFFFF" /><path d="M 125.5,131 l 103,0 0,22 -103,0 z M 125.5,331.7 l 103,0 0,22 -103,0 z M 125.5,319.5 l 1.5,0 101.5,-120.5 0,-33.7 -1.5,0 -101.5,120.5 z" stroke="#FFFFFF" stroke-linejoin="round" /><path d="M 125.5,165.3 l 1.5,0 101.5,120.5 0,33.7 -1.5,0 -101.5,-120.5 z" stroke="#FFFFFF" stroke-linejoin="round" /></g></svg></span><br>2025</h2>
+    <div class="portrait-grid">
+      <div class="pg-cell big"><div class="pg-label">Bevölkerung</div><div class="pg-value" id="prBevoelkerung">—</div></div>
+      <div class="pg-cell med"><div class="pg-label">Arbeitsplätze</div><div class="pg-value" id="prArbeit">—</div></div>
+      <div class="pg-cell med"><div class="pg-label">Wohnungen</div><div class="pg-value" id="prWohnungen">—</div></div>
+      <div class="pg-cell small"><div class="pg-label">Quartiergruppen</div><div class="pg-value" id="prQuartiere">14</div></div>
+      <div class="pg-cell small"><div class="pg-label">Statistische Quartiere</div><div class="pg-value" id="prStatQuartiere">31</div></div>
+      <div class="pg-cell small"><div class="pg-label">Gebäude</div><div class="pg-value" id="prGebaeude">—</div></div>
+      <div class="pg-cell small"><div class="pg-label">Anteil 65+</div><div class="pg-value" id="prAlter">—</div></div>
+    </div>
+    <p class="map-caption" style="margin-top:20px;">Bevölkerung, Quartiergliederung: Amt für Daten und Statistik Kanton St.Gallen. Arbeitsplätze, Wohnungen, Gebäude: <span class="badge-demo">Concept / Demo Data</span></p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p class="footer-note">St.Gallen in Daten ist ein Data-Design-Konzept. Bevölkerungszahlen (Gesamtstadt und Quartiergruppen) ab 2008 sind effektive Werte des Amts für Daten und Statistik Kanton St.Gallen (STADTSGPOP); davor modelliert. Wohnungen, Arbeitsplätze, Altersstruktur und Gebäude sind Platzhalterdaten für dieses Portfolio-Projekt. Die Struktur ist vorbereitet, um weitere echte Open-Data der Stadt und des Kantons St.Gallen einzusetzen.</p>
+  <p class="footer-meta">Data Design Concept<br>1981 → 2025</p>
+</footer>
+
+<div class="quartier-tooltip" id="quartierTooltip"></div>
+<div class="quartier-panel" id="quartierPanel">
+  <button class="qp-close" id="qpClose" aria-label="Schliessen">✕</button>
+  <div id="qpBody"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+/* ==========================================================================
+   St.Gallen in Daten
+   Alle Daten in diesem Prototyp sind Platzhalter (Concept / Demo Data).
+   Reale Anbindung: generateDemoData() durch einen fetch() auf CSV/JSON aus
+   dem Open-Data-Portal der Stadt / des Kantons St.Gallen ersetzen. Die
+   Datenstruktur (buildYearSeries, QUARTIERE, ECON_SECTORS) bleibt gleich.
+   ========================================================================== */
+(function(){
+  "use strict";
+
+  var YEARS = [];
+  for (var y = 1981; y <= 2025; y++) YEARS.push(y);
+  var YEAR_MIN = 1981, YEAR_MAX = 2025;
+
+  function fmt(n){
+    n = Math.round(n);
+    var s = Math.abs(n).toString();
+    s = s.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    return (n < 0 ? "-" : "") + s;
+  }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+  // Animate an element's displayed number from its current value to a new one.
+  // Uses a per-element token so rapid successive calls (e.g. dragging a
+  // slider) cancel the previous in-flight animation instead of stacking.
+  function animateNumber(el, toValue, opts){
+    opts = opts || {};
+    var duration = opts.duration || 320;
+    var decimals = opts.decimals || 0;
+    var prefix = opts.prefix || "";
+    var suffix = opts.suffix || "";
+    var fromValue = el.dataset.numVal !== undefined ? parseFloat(el.dataset.numVal) : toValue;
+    function fmtVal(v){ return prefix + (decimals > 0 ? v.toFixed(decimals) : fmt(Math.round(v))) + suffix; }
+    if (Math.abs(fromValue - toValue) < Math.pow(10, -decimals) / 2){
+      el.dataset.numVal = toValue;
+      el.textContent = fmtVal(toValue);
+      return;
+    }
+    var token = (el._animToken = (el._animToken || 0) + 1);
+    var startTime = null;
+    function step(ts){
+      if (el._animToken !== token) return;
+      if (!startTime) startTime = ts;
+      var t = Math.min((ts - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = fmtVal(fromValue + (toValue - fromValue) * eased);
+      if (t < 1){ requestAnimationFrame(step); }
+      else { el.dataset.numVal = toValue; }
+    }
+    el.dataset.numVal = toValue;
+    requestAnimationFrame(step);
+  }
+
+  // Piecewise-linear interpolation across keyframe points {year:value}
+  function seriesFromKeyframes(keys){
+    var pts = Object.keys(keys).map(Number).sort(function(a,b){return a-b;});
+    var out = {};
+    YEARS.forEach(function(year){
+      if (year <= pts[0]){ out[year] = keys[pts[0]]; return; }
+      if (year >= pts[pts.length-1]){ out[year] = keys[pts[pts.length-1]]; return; }
+      for (var i = 0; i < pts.length - 1; i++){
+        var a = pts[i], b = pts[i+1];
+        if (year >= a && year <= b){
+          var t = (year - a) / (b - a);
+          out[year] = lerp(keys[a], keys[b], t);
+          return;
+        }
+      }
+    });
+    return out;
+  }
+
+  // deterministic pseudo-noise for organic-looking curves (no Math.random)
+  function noise(year, amp, seed){
+    seed = seed || 0;
+    return Math.sin(year * 1.7 + seed) * amp * 0.4 + Math.sin(year * 0.6 + seed * 2.1) * amp * 0.6;
+  }
+
+  /* ---------------- POPULATION (city total) ----------------
+     REAL DATA 2008–2025: Amt für Daten und Statistik Kanton St.Gallen
+     (STADTSGPOP), Jahresendbestand, published as
+     B01_WBV_03_Bevoelkerungsstand-Quartiere.pdf on stadt.sg.ch.
+     1981–2007: no open data available at quartier/city level for this
+     population concept before 2008 ("Für den Zeitraum vor 2008 liegen
+     für das Bevölkerungskonzept STADTSGPOP keine Angaben vor") — this
+     span is a modelled trend anchored to the real 2008 value and is
+     drawn as a dashed line / flagged as estimated in the UI.
+     REAL DATA REPLACEMENT: swap POP_REAL for a fresh CSV/JSON pull from
+     https://daten.sg.ch (dataset "wohnbevolkerung-nach-monat-..." or the
+     yearly PDF above) to keep this current. */
+  var DATA_REAL_FROM = 2008;
+  var POP_REAL = {
+    2008:75648, 2009:76194, 2010:76528, 2011:77183, 2012:77878, 2013:78413,
+    2014:79341, 2015:79410, 2016:79331, 2017:79154, 2018:79551, 2019:79724,
+    2020:79990, 2021:80213, 2022:81615, 2023:82501, 2024:83164, 2025:83843
+  };
+  var popPreKeys = {1981:82300, 1990:79200, 2000:76600, 2008:POP_REAL[2008]};
+  var popPre = seriesFromKeyframes(popPreKeys);
+  var POP = {};
+  YEARS.forEach(function(year){
+    if (year >= DATA_REAL_FROM){ POP[year] = POP_REAL[year]; }
+    else { POP[year] = Math.round(popPre[year] + noise(year, 90, 3)); }
+  });
+
+  /* ---------------- AGE STRUCTURE ---------------- */
+  var AGE_BANDS = ["0–19", "20–39", "40–64", "65+"];
+  var ageKeys1981 = [24, 33, 27, 16];
+  var ageKeys2000 = [19, 31, 29, 21];
+  var ageKeys2025 = [16, 28, 31, 25];
+  var AGE = {};
+  YEARS.forEach(function(year){
+    var shares;
+    if (year <= 2000){
+      var t = (year - 1981) / (2000 - 1981);
+      shares = ageKeys1981.map(function(v,i){ return lerp(v, ageKeys2000[i], t); });
+    } else {
+      var t2 = (year - 2000) / (2025 - 2000);
+      shares = ageKeys2000.map(function(v,i){ return lerp(v, ageKeys2025[i], t2); });
+    }
+    var sum = shares.reduce(function(a,b){return a+b;}, 0);
+    AGE[year] = shares.map(function(v){ return v / sum * 100; });
+  });
+
+  /* ---------------- QUARTIERE ----------------
+     REAL DATA 2008–2025 (population per Quartiergruppe): same source
+     and document as POP_REAL above — official year-end figures for
+     all 14 Quartiergruppen. Listed newest→oldest to match the source
+     table; reversed into a year→value map below.
+     Kreis, x/y (stylised map position) and area (km²) are NOT from
+     open data — x/y is this project's own abstract layout, area is
+     an estimate. Only the population series is sourced. */
+  var REAL_YEARS_DESC = [2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008];
+  var QUARTIERE_RAW = [
+    {id:"winkeln",    name:"Winkeln",                 kreis:"West",    x:90,  y:210, p1981:2900,
+      real:[4694,4657,4713,4567,4477,4506,4460,4434,4318,4230,4221,4232,4256,4194,4161,4025,3937,3862], area:5.8},
+    {id:"bruggen",    name:"Bruggen",                 kreis:"West",    x:230, y:300, p1981:10800,
+      real:[13934,13785,13635,13425,13148,13080,12766,12596,12578,12515,12367,12204,11926,11864,11697,11709,11675,11442], area:3.1},
+    {id:"lachen",     name:"Lachen",                  kreis:"West",    x:150, y:430, p1981:6600,
+      real:[7392,7266,7231,7231,7089,7077,7140,7102,7094,7194,7201,7098,6956,6884,6778,6765,6831,6835], area:2.4},
+    {id:"rosenberg",  name:"Rosenberg",               kreis:"Centrum", x:530, y:230, p1981:4900,
+      real:[4756,4753,4688,4584,4571,4552,4565,4579,4538,4514,4577,4605,4637,4556,4342,4420,4489,4454], area:1.6},
+    {id:"riethuesli", name:"Riethüsli",                kreis:"Centrum", x:470, y:150, p1981:4300,
+      real:[4562,4437,4458,4343,4308,4315,4325,4457,4507,4443,4403,4465,4401,4395,4420,4326,4313,4295], area:2.0},
+    {id:"stgeorgen",  name:"St.Georgen",              kreis:"Centrum", x:360, y:330, p1981:4900,
+      real:[5424,5383,5362,5297,5219,5140,5153,5089,5064,5135,5184,5203,5204,5177,5150,5115,5097,5037], area:2.8},
+    {id:"innenstadt", name:"Innenstadt",              kreis:"Centrum", x:500, y:350, p1981:3300,
+      real:[3240,3150,3114,3022,2949,2928,2928,2929,2913,2950,2888,2830,2766,2792,2829,2899,2869,2946], area:0.9},
+    {id:"stjakob",    name:"St.Jakob",                kreis:"Centrum", x:520, y:440, p1981:3900,
+      real:[3945,3907,3882,3834,3776,3737,3696,3729,3725,3680,3733,3773,3727,3702,3763,3752,3776,3763], area:0.7},
+    {id:"linsebuehl", name:"Linsebühl – Dreilinden",  kreis:"Centrum", x:430, y:420, p1981:4600,
+      real:[4926,4915,4838,4854,4752,4747,4710,4665,4643,4696,4703,4687,4629,4593,4613,4555,4604,4576], area:1.1},
+    {id:"rotmonten",  name:"Rotmonten",               kreis:"Ost",     x:650, y:330, p1981:2600,
+      real:[2895,2869,2820,2743,2724,2682,2755,2794,2734,2737,2707,2694,2611,2595,2583,2595,2580,2525], area:3.4},
+    {id:"langgass",   name:"Langgass – Heiligkreuz",  kreis:"Ost",     x:600, y:250, p1981:7300,
+      real:[8221,8207,8249,8264,8081,8130,8174,8151,8128,8105,8134,8162,7948,7882,7868,7828,7866,7616], area:1.8},
+    {id:"stfiden",    name:"St.Fiden – Krontal",      kreis:"Ost",     x:690, y:170, p1981:7500,
+      real:[8735,8667,8546,8453,8308,8395,8280,8264,8255,8406,8373,8341,8271,8299,8164,8105,8006,7845], area:1.9},
+    {id:"notkersegg", name:"Notkersegg",              kreis:"Ost",     x:830, y:240, p1981:1600,
+      real:[1859,1854,1844,1854,1866,1809,1765,1687,1686,1691,1677,1682,1658,1640,1637,1622,1630,1657], area:4.5},
+    {id:"neudorf",    name:"Neudorf",                 kreis:"Ost",     x:830, y:390, p1981:7500,
+      real:[8904,8776,8713,8720,8501,8447,8512,8599,8495,8540,8558,8629,8667,8568,8523,8310,8127,8143], area:3.9}
+  ];
+  var QUARTIERE = QUARTIERE_RAW.map(function(q, i){
+    var realByYear = {};
+    REAL_YEARS_DESC.forEach(function(y, idx){ realByYear[y] = q.real[idx]; });
+    var prePts = seriesFromKeyframes({1981:q.p1981, 2008:realByYear[2008]});
+    var series = {};
+    YEARS.forEach(function(year){
+      if (year >= DATA_REAL_FROM){ series[year] = realByYear[year]; }
+      else { series[year] = Math.round(prePts[year] + noise(year, 18, i * 1.3)); }
+    });
+    return { id:q.id, name:q.name, kreis:q.kreis, x:q.x, y:q.y, area:q.area, series: series };
+  });
+
+  /* ---------------- HOUSING ---------------- */
+  var housingKeys = {1981:34500, 1990:35800, 2000:37000, 2010:39500, 2020:42600, 2025:44200};
+  var H_UNITS = seriesFromKeyframes(housingKeys);
+  var roomKeys = {1981:3.6, 2000:3.4, 2025:3.1};
+  var H_ROOMS = seriesFromKeyframes(roomKeys);
+
+  /* ---------------- ECONOMY ---------------- */
+  var econJobsKeys = {1981:61000, 1990:64000, 2000:63500, 2010:68000, 2020:74000, 2025:76500};
+  var ECON_TOTAL = seriesFromKeyframes(econJobsKeys);
+  var ECON_SECTORS = [
+    {name:"Industrie & Gewerbe",        s1981:34, s2000:22, s2025:14},
+    {name:"Detailhandel",               s1981:16, s2000:15, s2025:11},
+    {name:"Finanzen & Versicherungen",  s1981:10, s2000:14, s2025:17},
+    {name:"Gesundheit & Soziales",      s1981:10, s2000:15, s2025:20},
+    {name:"Bildung & Wissenschaft",     s1981:8,  s2000:11, s2025:15},
+    {name:"Übrige Dienstleistungen",    s1981:22, s2000:23, s2025:23}
+  ];
+  function econSharesForYear(year){
+    return ECON_SECTORS.map(function(sec){
+      var v;
+      if (year <= 2000){
+        var t = (year - 1981) / (2000 - 1981);
+        v = lerp(sec.s1981, sec.s2000, t);
+      } else {
+        var t2 = (year - 2000) / (2025 - 2000);
+        v = lerp(sec.s2000, sec.s2025, t2);
+      }
+      return { name: sec.name, share: v };
+    });
+  }
+
+  /* ==========================================================================
+     GLOBAL STATE — one shared year drives every visualization on the page.
+     ========================================================================== */
+  var state = { year: 2025 };
+  var renderers = [];
+  function onYearChange(fn){ renderers.push(fn); }
+  function setYear(y){
+    y = clamp(Math.round(y), YEAR_MIN, YEAR_MAX);
+    if (y === state.year) return;
+    state.year = y;
+    renderers.forEach(function(fn){ fn(state.year); });
+  }
+  function renderAll(){ renderers.forEach(function(fn){ fn(state.year); }); }
+
+  // Shared scroll-scrub binding: a tall .scrub-track wrapping a sticky
+  // .scrub-sticky panel. Scroll progress through the track maps to the
+  // shared year. Used by section 01 (population) and section 06 (timeline).
+  function bindScrollScrub(trackId){
+    var track = document.getElementById(trackId);
+    if (!track) return;
+    var ticking = false;
+    function onScroll(){
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        var rect = track.getBoundingClientRect();
+        var vh = window.innerHeight;
+        var total = rect.height - vh;
+        if (total > 0 && rect.top <= 0 && rect.bottom > vh){
+          var progress = clamp(-rect.top / total, 0, 1);
+          setYear(YEAR_MIN + progress * (YEAR_MAX - YEAR_MIN));
+        }
+        ticking = false;
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  /* ==========================================================================
+     GRID OVERLAY
+     ========================================================================== */
+  (function buildGrid(){
+    var el = document.getElementById("gridOverlay");
+    for (var i = 0; i < 12; i++){
+      var d = document.createElement("div");
+      d.className = "col";
+      el.appendChild(d);
+    }
+  })();
+
+  /* ==========================================================================
+     HUD — section index
+     ========================================================================== */
+  var hudSection = document.getElementById("hudSection");
+
+  /* ---- Navbar fade-in: once scrolled past the hero, the navbar (with its
+     own static "St.Gallen / In Daten" label) simply fades in. The hero
+     title itself is plain content and scrolls away normally. ---- */
+  (function initNavbarFade(){
+    var hudTl = document.getElementById("hudTl");
+    var navbarBg = document.getElementById("navbarBg");
+    var heroEl = document.getElementById("hero");
+    if (!hudTl || !navbarBg) return;
+
+    var threshold = window.innerHeight * 0.6;
+    function updateThreshold(){
+      threshold = heroEl ? heroEl.offsetHeight * 0.6 : window.innerHeight * 0.6;
+    }
+    updateThreshold();
+    window.addEventListener("resize", function(){
+      clearTimeout(updateThreshold._t);
+      updateThreshold._t = setTimeout(updateThreshold, 150);
+    });
+
+    var ticking = false;
+    function render(){
+      var visible = window.scrollY > threshold;
+      hudTl.classList.toggle("visible", visible);
+      navbarBg.classList.toggle("visible", visible);
+    }
+    render();
+    window.addEventListener("scroll", function(){
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){ render(); ticking = false; });
+    }, { passive: true });
+  })();
+
+  var sectionEls = Array.prototype.slice.call(document.querySelectorAll("main .chapter"));
+  var railDots = Array.prototype.slice.call(document.querySelectorAll(".railnav-dot"));
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting){
+        var idx = entry.target.getAttribute("data-chapter") || "—";
+        hudSection.textContent = idx + " / 07";
+        railDots.forEach(function(d){ d.classList.toggle("active", d.dataset.target === entry.target.id); });
+      }
+    });
+  }, { threshold: 0, rootMargin: "-45% 0px -45% 0px" });
+  sectionEls.forEach(function(s){ io.observe(s); });
+
+  var heroEl = document.getElementById("hero");
+  var ioHero = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) railDots.forEach(function(d){ d.classList.toggle("active", d.dataset.target === "hero"); });
+    });
+  }, { threshold: 0.5 });
+  ioHero.observe(heroEl);
+
+  railDots.forEach(function(d){
+    d.addEventListener("click", function(){
+      var target = document.getElementById(d.dataset.target);
+      if (target) target.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  /* ==========================================================================
+     SECTION 01 — Bevölkerung (scroll-scrubbed line chart)
+     ========================================================================== */
+  (function initPopulation(){
+    var svg = d3.select("#popChart");
+    var W = 1000, H = 420, M = { t: 20, r: 8, b: 36, l: 8 };
+    var x = d3.scaleLinear().domain([YEAR_MIN, YEAR_MAX]).range([M.l, W - M.r]);
+    var minV = d3.min(YEARS, function(y){ return POP[y]; });
+    var maxV = d3.max(YEARS, function(y){ return POP[y]; });
+    var yScale = d3.scaleLinear().domain([minV - 2000, maxV + 2000]).range([H - M.b, M.t]);
+
+    var lineGen = d3.line().x(function(d){ return x(d[0]); }).y(function(d){ return yScale(d[1]); }).curve(d3.curveMonotoneX);
+    var areaGen = d3.area().x(function(d){ return x(d[0]); }).y0(H - M.b).y1(function(d){ return yScale(d[1]); }).curve(d3.curveMonotoneX);
+    var fullData = YEARS.map(function(y){ return [y, POP[y]]; });
+
+    svg.append("path").attr("class", "pop-line-context").attr("d", lineGen(fullData));
+
+    var axisG = svg.append("g");
+    axisG.append("line").attr("class", "pop-axis-line").attr("x1", M.l).attr("x2", W - M.r).attr("y1", H - M.b).attr("y2", H - M.b);
+    var ticks = [1981, 1990, 2000, 2010, 2020, 2025];
+    ticks.forEach(function(t){
+      var g = axisG.append("g").attr("class", "pop-tick").attr("transform", "translate(" + x(t) + ",0)");
+      g.append("line").attr("y1", H - M.b).attr("y2", H - M.b + 6);
+      g.append("text").attr("y", H - M.b + 22).attr("text-anchor", "middle").text(t);
+    });
+
+    var activeArea = svg.append("path").attr("class", "pop-area-active");
+    var activeLinePre = svg.append("path").attr("class", "pop-line-active pre");
+    var activeLinePost = svg.append("path").attr("class", "pop-line-active");
+    var playhead = svg.append("line").attr("class", "pop-playhead").attr("y1", M.t).attr("y2", H - M.b);
+    var dot = svg.append("circle").attr("class", "pop-dot").attr("r", 5);
+
+    var yearLabel = document.getElementById("popYearLabel");
+    var valueLabel = document.getElementById("popValueLabel");
+    var deltaLabel = document.getElementById("popDeltaLabel");
+    var slider = document.getElementById("popSlider");
+    var sourceBadge = document.getElementById("popSourceBadge");
+
+    function draw(year){
+      var data = fullData.filter(function(d){ return d[0] <= year; });
+      if (data.length < 2) data = fullData.slice(0, 2);
+      var preData = data.filter(function(d){ return d[0] <= DATA_REAL_FROM; });
+      var postData = data.filter(function(d){ return d[0] >= DATA_REAL_FROM; });
+      activeLinePre.attr("d", preData.length > 1 ? lineGen(preData) : null);
+      activeLinePost.attr("d", postData.length > 1 ? lineGen(postData) : null);
+      activeArea.attr("d", areaGen(data));
+      var px = x(year), py = yScale(POP[year]);
+      playhead.attr("x1", px).attr("x2", px);
+      dot.attr("cx", px).attr("cy", py);
+      yearLabel.textContent = year;
+      animateNumber(valueLabel, POP[year], { duration: 200 });
+      var prevYear = clamp(year - 5, YEAR_MIN, YEAR_MAX);
+      var delta = POP[year] - POP[prevYear];
+      var pct = (delta / POP[prevYear] * 100).toFixed(1);
+      deltaLabel.innerHTML = (delta >= 0 ? "<span class='up'>+" : "<span class='down'>") + fmt(delta) + " (" + (delta>=0?"+":"") + pct + "%)</span> seit " + prevYear;
+      slider.value = year;
+      sourceBadge.textContent = year >= DATA_REAL_FROM
+        ? "Effektive Daten (Amt für Statistik SG)"
+        : "Vor " + DATA_REAL_FROM + ": modellierter Verlauf";
+    }
+    draw(state.year);
+    onYearChange(draw);
+
+    slider.addEventListener("input", function(){ setYear(+slider.value); });
+
+    bindScrollScrub("s01track");
+  })();
+
+  /* ==========================================================================
+     SECTION 02 — Quartiere (Voronoi map)
+     ========================================================================== */
+  var quartierVoronoiCells = null;
+  (function initQuartiere(){
+    var svg = d3.select("#quartiereMap");
+    var W = 1000, H = 650;
+    var wrapEl = document.querySelector(".quartiere-wrap");
+
+    function sizeWrap(){
+      if (!wrapEl) return;
+      var w = wrapEl.clientWidth;
+      var naturalH = w / (W / H);
+      var vhCap = window.innerHeight * 0.84;
+      wrapEl.style.height = Math.round(Math.min(naturalH, vhCap)) + "px";
+    }
+    sizeWrap();
+    var sizeT;
+    window.addEventListener("resize", function(){
+      clearTimeout(sizeT);
+      sizeT = setTimeout(sizeWrap, 150);
+    });
+
+    var points = QUARTIERE.map(function(q){ return [q.x, q.y]; });
+    var delaunay = d3.Delaunay.from(points);
+    var voronoi = delaunay.voronoi([10, 10, W - 10, H - 10]);
+
+    var defs = svg.append("defs");
+    QUARTIERE.forEach(function(q, i){
+      var density = q.series[2025] / q.area;
+      var spacing = clamp(22 - density / 700, 8, 20);
+      var pat = defs.append("pattern")
+        .attr("id", "pat-" + q.id)
+        .attr("width", spacing).attr("height", spacing)
+        .attr("patternUnits", "userSpaceOnUse")
+        .attr("patternTransform", "rotate(" + (i * 17 % 90) + ")");
+      pat.append("rect").attr("width", spacing).attr("height", spacing).attr("fill", "#fff");
+      pat.append("circle").attr("cx", spacing/2).attr("cy", spacing/2).attr("r", 1.1).attr("fill", "rgba(0,0,0,0.5)");
+    });
+
+    var cellsG = svg.append("g");
+    quartierVoronoiCells = QUARTIERE.map(function(q, i){
+      var poly = voronoi.cellPolygon(i);
+      var path = cellsG.append("path")
+        .datum(q)
+        .attr("class", "qcell")
+        .attr("d", "M" + poly.map(function(p){ return p.join(","); }).join("L") + "Z")
+        .attr("fill", "url(#pat-" + q.id + ")")
+        .attr("fill-opacity", 1);
+      var centroid = d3.polygonCentroid(poly);
+      return { q: q, path: path, centroid: centroid };
+    });
+
+    var labelsG = svg.append("g");
+    quartierVoronoiCells.forEach(function(c){
+      labelsG.append("text")
+        .attr("class", "qcell-label" + (c.q.area < 1.3 ? " small" : ""))
+        .attr("x", c.centroid[0]).attr("y", c.centroid[1])
+        .text(c.q.name.length > 16 ? c.q.name.split(" ")[0] : c.q.name);
+    });
+
+    var tooltip = document.getElementById("quartierTooltip");
+    var panel = document.getElementById("quartierPanel");
+    var qpBody = document.getElementById("qpBody");
+    var qpClose = document.getElementById("qpClose");
+
+    function densityFmt(q){ return fmt(Math.round(q.series[state.year] / q.area)) + " / km²"; }
+
+    quartierVoronoiCells.forEach(function(c){
+      c.path
+        .on("mouseenter", function(){
+          c.path.style("fill", "var(--accent-20)");
+        })
+        .on("mousemove", function(event){
+          var q = c.q;
+          tooltip.innerHTML =
+            "<div class='t-name'>" + q.name + "</div>" +
+            "<div class='t-row'><span>Bevölkerung</span><span>" + fmt(q.series[state.year]) + "</span></div>" +
+            "<div class='t-row'><span>Fläche</span><span>" + q.area.toFixed(1) + " km²</span></div>" +
+            "<div class='t-row'><span>Dichte</span><span>" + densityFmt(q) + "</span></div>";
+          tooltip.style.left = event.clientX + "px";
+          tooltip.style.top = event.clientY + "px";
+          tooltip.classList.add("visible");
+        })
+        .on("mouseleave", function(){
+          c.path.style("fill", null);
+          tooltip.classList.remove("visible");
+        })
+        .on("click", function(){ openPanel(c.q); });
+    });
+
+    var openQuartier = null;
+
+    function openPanel(q){
+      openQuartier = q;
+      renderPanel(q);
+      panel.classList.add("open");
+    }
+
+    function renderPanel(q){
+      var current = q.series[state.year];
+      var ref = q.series[YEAR_MIN];
+      var delta = ((current - ref) / ref * 100).toFixed(1);
+      var spark = YEARS.map(function(y){ return [y, q.series[y]]; });
+      var minV = d3.min(spark, function(d){ return d[1]; });
+      var maxV = d3.max(spark, function(d){ return d[1]; });
+      var sx = d3.scaleLinear().domain([YEAR_MIN, YEAR_MAX]).range([0, 300]);
+      var sy = d3.scaleLinear().domain([minV, maxV]).range([60, 4]);
+      var lineGen = d3.line().x(function(d){ return sx(d[0]); }).y(function(d){ return sy(d[1]); }).curve(d3.curveMonotoneX);
+      var areaGen = d3.area().x(function(d){ return sx(d[0]); }).y0(64).y1(function(d){ return sy(d[1]); }).curve(d3.curveMonotoneX);
+
+      qpBody.innerHTML =
+        "<div class='qp-kreis'>Kreis " + q.kreis + "</div>" +
+        "<div class='qp-name'>" + q.name + "</div>" +
+        "<div class='qp-value'>" + fmt(current) + "</div>" +
+        "<div class='qp-label'>Einwohner, " + state.year + "</div>" +
+        "<div class='qp-delta'><span class='" + (delta>=0?"up":"down") + "'>" + (delta>=0?"+":"") + delta + " %</span> seit " + YEAR_MIN + "</div>" +
+        "<div class='qp-meta'>" +
+          "<div>Fläche<strong>" + q.area.toFixed(1) + " km²</strong></div>" +
+          "<div>Dichte<strong>" + densityFmt(q) + "</strong></div>" +
+        "</div>" +
+        "<svg class='qp-spark' viewBox='0 0 300 70'>" +
+          "<path class='area' d='" + areaGen(spark) + "'></path>" +
+          "<path class='line' d='" + lineGen(spark) + "'></path>" +
+        "</svg>" +
+        "<div class='qp-spark-label'>1981 – 2025 · ab " + DATA_REAL_FROM + " effektiv, davor modelliert</div>";
+    }
+    qpClose.addEventListener("click", function(){ panel.classList.remove("open"); openQuartier = null; });
+    onYearChange(function(){ if (openQuartier) renderPanel(openQuartier); });
+  })();
+
+  /* ==========================================================================
+     SECTION 03 — Alter (dot sculpture)
+     ========================================================================== */
+  (function initAge(){
+    var svg = d3.select("#ageChart");
+    var W = 560, H = 380;
+    var totalDots = 460;
+    var stackbarEl = document.getElementById("ageStackbar");
+    var g = svg.append("g");
+
+    // build the four band elements once
+    var bandEls = AGE_BANDS.map(function(name, i){
+      var band = document.createElement("div");
+      band.className = "age-stackbar-band" + (i === 3 ? " hi" : "");
+      band.innerHTML = "<span class='asb-name'>" + name + " Jahre</span><span class='asb-pct'></span>";
+      stackbarEl.appendChild(band);
+      return { el: band, pctEl: band.querySelector(".asb-pct") };
+    });
+
+    function stackTotalPx(){
+      return clamp(window.innerHeight * 0.34, 240, 380);
+    }
+
+    function layoutDots(year){
+      var shares = AGE[year];
+      var counts = shares.map(function(s){ return Math.round(totalDots * s / 100); });
+      var bandH = H / 4;
+      var dots = [];
+      counts.forEach(function(count, bandIdx){
+        var yTop = bandIdx * bandH;
+        var cols = Math.ceil(Math.sqrt(count * (W / bandH)));
+        cols = clamp(cols, 6, 40);
+        var rows = Math.ceil(count / cols);
+        var cellW = W / cols;
+        var cellH = bandH / Math.max(rows, 1);
+        for (var i = 0; i < count; i++){
+          var col = i % cols;
+          var row = Math.floor(i / cols);
+          var jitterX = (Math.sin(i * 12.9898 + bandIdx) * 0.5) * (cellW * 0.35);
+          var jitterY = (Math.sin(i * 78.233 + bandIdx) * 0.5) * (cellH * 0.35);
+          dots.push({
+            x: col * cellW + cellW / 2 + jitterX,
+            y: yTop + row * cellH + cellH / 2 + jitterY,
+            band: bandIdx,
+            key: bandIdx + "-" + i
+          });
+        }
+      });
+      return { dots: dots, counts: counts };
+    }
+
+    function draw(year){
+      var res = layoutDots(year);
+      var sel = g.selectAll("circle.age-dot").data(res.dots, function(d){ return d.key; });
+      sel.exit().transition().duration(300).attr("r", 0).remove();
+      var enter = sel.enter().append("circle")
+        .attr("class", "age-dot")
+        .attr("cx", function(d){ return d.x; })
+        .attr("cy", function(d){ return d.y; })
+        .attr("r", 0)
+        .attr("fill-opacity", function(d){ return d.band === 3 ? 1 : 0.28 + d.band * 0.18; });
+      enter.merge(sel).transition().duration(450)
+        .attr("cx", function(d){ return d.x; })
+        .attr("cy", function(d){ return d.y; })
+        .attr("fill-opacity", function(d){ return d.band === 3 ? 1 : 0.28 + d.band * 0.18; })
+        .attr("r", 2.1);
+
+      var totalPx = stackTotalPx();
+      var shares = AGE[year];
+      bandEls.forEach(function(b, i){
+        var h = Math.max(38, Math.round(shares[i] / 100 * totalPx));
+        b.el.style.height = h + "px";
+        animateNumber(b.pctEl, shares[i], { decimals: 1, suffix: " %", duration: 400 });
+      });
+    }
+    draw(state.year);
+    onYearChange(draw);
+
+    var resizeT;
+    window.addEventListener("resize", function(){
+      clearTimeout(resizeT);
+      resizeT = setTimeout(function(){ draw(state.year); }, 150);
+    });
+  })();
+
+  /* ==========================================================================
+     SECTION 04 — Wohnen (housing skyline)
+     ========================================================================== */
+  (function initHousing(){
+    var container = document.getElementById("housingGrid");
+    var hYear = document.getElementById("hYear");
+    var hUnits = document.getElementById("hUnits");
+    var hRooms = document.getElementById("hRooms");
+    var hNew = document.getElementById("hNew");
+    var slider = document.getElementById("housingSlider");
+    var SCALE = 500; // 1 bar = 500 real units
+    var maxBars = Math.ceil(H_UNITS[YEAR_MAX] / SCALE) + 4;
+    var bars = [];
+    var targetHeights = [];
+    for (var i = 0; i < maxBars; i++){
+      var el = document.createElement("div");
+      el.className = "hbar";
+      var h = 30 + (Math.abs(Math.sin(i * 12.9898)) * 170);
+      targetHeights.push(h);
+      el.style.height = "0px";
+      container.appendChild(el);
+      bars.push(el);
+    }
+
+    function draw(year){
+      hYear.textContent = year;
+      var units = H_UNITS[year];
+      var count = Math.round(units / SCALE);
+      var prevUnits = H_UNITS[clamp(year - 5, YEAR_MIN, YEAR_MAX)];
+      var newCount = Math.round((units - prevUnits) / SCALE);
+      bars.forEach(function(bar, i){
+        var visible = i < count;
+        bar.style.height = (visible ? targetHeights[i] : 0).toFixed(0) + "px";
+        bar.classList.toggle("new", visible && i >= count - Math.max(newCount, 0));
+      });
+      animateNumber(hUnits, units, { duration: 350 });
+      animateNumber(hRooms, H_ROOMS[year], { decimals: 1, duration: 350 });
+      animateNumber(hNew, Math.max(units - prevUnits, 0), { duration: 350, prefix: "+" });
+      slider.value = year;
+    }
+    draw(state.year);
+    onYearChange(draw);
+    slider.addEventListener("input", function(){ setYear(+slider.value); });
+    bindScrollScrub("s04track");
+  })();
+
+  /* ==========================================================================
+     SECTION 05 — Arbeit (treemap)
+     ========================================================================== */
+  (function initEcon(){
+    var svg = d3.select("#econChart");
+    var svgEl = document.getElementById("econChart");
+    var W = 1000, H = 480;
+    var g = svg.append("g");
+    var econTotalEl = document.getElementById("econTotal");
+    var econYearEl = document.getElementById("econYear");
+    var slider = document.getElementById("econSlider");
+    var currentScale = 1;
+
+    // Keep the SVG box in the exact W:H ratio at all times (bounded by both
+    // available width and a vh budget) so preserveAspectRatio="none" never
+    // has to stretch x and y by different factors — which is what was
+    // squashing the text on narrow windows.
+    function sizeChart(){
+      var containerWidth = svgEl.parentElement.clientWidth;
+      var chromeBudget = 320; // approx space for stats row, slider, sticky padding, margins
+      var vhCap = Math.max(window.innerHeight - chromeBudget, 220);
+      var maxWidthFromHeight = vhCap * (W / H);
+      var w = Math.min(containerWidth, maxWidthFromHeight);
+      var h = w / (W / H);
+      svgEl.style.width = Math.round(w) + "px";
+      svgEl.style.height = Math.round(h) + "px";
+      currentScale = w / W;
+    }
+    sizeChart();
+    var sizeT;
+    window.addEventListener("resize", function(){
+      clearTimeout(sizeT);
+      sizeT = setTimeout(function(){ sizeChart(); draw(state.year); }, 150);
+    });
+
+    function draw(year){
+      var sectors = econSharesForYear(year);
+      var root = d3.hierarchy({ children: sectors }).sum(function(d){ return d.share; });
+      d3.treemap().size([W, H]).paddingInner(3).paddingOuter(0)(root);
+
+      var nodes = root.leaves();
+      var sel = g.selectAll("g.econ-node").data(nodes, function(d){ return d.data.name; });
+      sel.exit().remove();
+      var enter = sel.enter().append("g").attr("class", "econ-node");
+      enter.append("clipPath").attr("class", "econ-clip").append("rect");
+      enter.append("rect").attr("class", "econ-rect");
+      enter.append("text").attr("class", "econ-label-name");
+      enter.append("text").attr("class", "econ-label-pct");
+
+      var merged = enter.merge(sel);
+      merged.select("clipPath.econ-clip").attr("id", function(d, i){ return "econclip-" + i; });
+      merged.transition().duration(500)
+        .attr("transform", function(d){ return "translate(" + d.x0 + "," + d.y0 + ")"; });
+      merged.select("rect.econ-rect").transition().duration(500)
+        .attr("width", function(d){ return Math.max(d.x1 - d.x0, 0); })
+        .attr("height", function(d){ return Math.max(d.y1 - d.y0, 0); });
+      merged.select("clipPath.econ-clip rect")
+        .attr("width", function(d){ return Math.max(d.x1 - d.x0, 0); })
+        .attr("height", function(d){ return Math.max(d.y1 - d.y0, 0); });
+      var shortNames = {
+        "Industrie & Gewerbe": "Industrie",
+        "Finanzen & Versicherungen": "Finanzen",
+        "Gesundheit & Soziales": "Gesundheit",
+        "Bildung & Wissenschaft": "Bildung",
+        "Übrige Dienstleistungen": "Dienstleistungen"
+      };
+      merged.select("text.econ-label-name")
+        .attr("x", 12).attr("y", 24)
+        .attr("clip-path", function(d, i){ return "url(#econclip-" + i + ")"; })
+        .style("font-size", (11 / currentScale).toFixed(1) + "px")
+        .style("display", function(d){
+          var wPx = (d.x1 - d.x0) * currentScale, hPx = (d.y1 - d.y0) * currentScale;
+          return wPx > 44 && hPx > 26 ? null : "none";
+        })
+        .text(function(d){
+          var wPx = (d.x1 - d.x0) * currentScale;
+          var full = d.data.name;
+          return (wPx < 160 && shortNames[full]) ? shortNames[full] : full;
+        })
+        .each(function(d){
+          var t = d3.select(this).select("title");
+          if (t.empty()) t = d3.select(this).append("title");
+          t.text(d.data.name);
+        });
+      merged.select("text.econ-label-pct")
+        .attr("x", 12).attr("y", function(d){ return Math.min(d.y1-d.y0, H) - 22; })
+        .attr("clip-path", function(d, i){ return "url(#econclip-" + i + ")"; })
+        .style("font-size", function(d){
+          var cellHeightPx = (d.y1 - d.y0) * currentScale;
+          var cellWidthPx = (d.x1 - d.x0) * currentScale;
+          var targetPx = clamp(cellHeightPx * 0.22, 13, 34);
+          targetPx = Math.min(targetPx, (cellWidthPx - 16) / 2.1);
+          targetPx = Math.max(targetPx, 10);
+          return (targetPx / currentScale).toFixed(1) + "px";
+        })
+        .style("display", function(d){
+          var wPx = (d.x1 - d.x0) * currentScale, hPx = (d.y1 - d.y0) * currentScale;
+          return wPx > 34 && hPx > 26 ? null : "none";
+        })
+        .text(function(d){ return d.data.share.toFixed(0) + "%"; });
+
+      econYearEl.textContent = year;
+      animateNumber(econTotalEl, ECON_TOTAL[year], { duration: 350 });
+      slider.value = year;
+    }
+    draw(state.year);
+    onYearChange(draw);
+    slider.addEventListener("input", function(){ setYear(+slider.value); });
+    bindScrollScrub("s05track");
+  })();
+
+  /* ==========================================================================
+     SECTION 06 — Veränderung (master timeline)
+     ========================================================================== */
+  (function initTimeline(){
+    var track = document.getElementById("timelineTrack");
+    var handle = document.getElementById("timelineHandle");
+    var ticks = [1981, 1990, 2000, 2010, 2020, 2025];
+
+    ticks.forEach(function(t){
+      var pct = (t - YEAR_MIN) / (YEAR_MAX - YEAR_MIN) * 100;
+      var tick = document.createElement("div");
+      tick.className = "timeline-tick";
+      tick.style.left = pct + "%";
+      track.appendChild(tick);
+      var label = document.createElement("div");
+      label.className = "timeline-tick-label";
+      label.style.left = pct + "%";
+      label.textContent = t;
+      track.appendChild(label);
+    });
+
+    function yearFromClientX(clientX){
+      var rect = track.getBoundingClientRect();
+      var pct = clamp((clientX - rect.left) / rect.width, 0, 1);
+      return Math.round(YEAR_MIN + pct * (YEAR_MAX - YEAR_MIN));
+    }
+    function positionHandle(year){
+      var pct = (year - YEAR_MIN) / (YEAR_MAX - YEAR_MIN) * 100;
+      handle.style.left = pct + "%";
+      handle.setAttribute("data-year", year);
+    }
+    positionHandle(state.year);
+    onYearChange(positionHandle);
+
+    var dragging = false;
+    handle.addEventListener("pointerdown", function(e){ dragging = true; handle.setPointerCapture(e.pointerId); });
+    handle.addEventListener("pointermove", function(e){ if (dragging) setYear(yearFromClientX(e.clientX)); });
+    handle.addEventListener("pointerup", function(){ dragging = false; });
+    track.addEventListener("click", function(e){ if (e.target === handle) return; setYear(yearFromClientX(e.clientX)); });
+
+    var syncPop = document.getElementById("syncPop");
+    var syncJobs = document.getElementById("syncJobs");
+    var syncHousing = document.getElementById("syncHousing");
+    var syncAge = document.getElementById("syncAge");
+    var syncGrowth = document.getElementById("syncGrowth");
+
+    function draw(year){
+      animateNumber(syncPop, POP[year], { duration: 300 });
+      animateNumber(syncJobs, ECON_TOTAL[year], { duration: 300 });
+      animateNumber(syncHousing, H_UNITS[year], { duration: 300 });
+      animateNumber(syncAge, AGE[year][3], { decimals: 1, suffix: " %", duration: 300 });
+      var prevYear = clamp(year - 5, YEAR_MIN, YEAR_MAX);
+      var best = QUARTIERE.reduce(function(acc, q){
+        var growth = (q.series[year] - q.series[prevYear]) / Math.max(q.series[prevYear], 1);
+        return growth > acc.growth ? { name: q.name, growth: growth } : acc;
+      }, { name: "—", growth: -Infinity });
+      syncGrowth.textContent = best.name;
+    }
+    draw(state.year);
+    onYearChange(draw);
+
+    bindScrollScrub("s06track");
+  })();
+
+  /* ==========================================================================
+     SECTION 07 — Datenportrait (2025 poster)
+     ========================================================================== */
+  (function initPortrait(){
+    var stats = [
+      { id: "prBevoelkerung", value: POP[2025], opts: { duration: 900 } },
+      { id: "prArbeit", value: ECON_TOTAL[2025], opts: { duration: 900 } },
+      { id: "prWohnungen", value: H_UNITS[2025], opts: { duration: 900 } },
+      { id: "prGebaeude", value: 9840, opts: { duration: 900 } },
+      { id: "prAlter", value: AGE[2025][3], opts: { duration: 900, decimals: 1, suffix: " %" } }
+    ];
+    stats.forEach(function(s){
+      var el = document.getElementById(s.id);
+      el.dataset.numVal = 0;
+      el.textContent = s.opts.decimals ? (0).toFixed(s.opts.decimals) + s.opts.suffix : "0";
+    });
+
+    var triggered = false;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && !triggered){
+          triggered = true;
+          stats.forEach(function(s){ animateNumber(document.getElementById(s.id), s.value, s.opts); });
+          io.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+    io.observe(document.getElementById("s07"));
+
+    var svg = d3.select("#portraitBg");
+    var points = QUARTIERE.map(function(q){ return [q.x, q.y]; });
+    var delaunay = d3.Delaunay.from(points);
+    var voronoi = delaunay.voronoi([10, 10, 990, 640]);
+    QUARTIERE.forEach(function(q, i){
+      var poly = voronoi.cellPolygon(i);
+      if (!poly) return;
+      svg.append("path")
+        .attr("d", "M" + poly.map(function(p){ return p.join(","); }).join("L") + "Z")
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("stroke-width", 1);
+    });
+  })();
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

@@ -200,28 +200,28 @@
         z-index: 60;
         width: 46px;
         height: 24px;
-        border: 1.5px solid #000;
+        border: 1px solid var(--line-strong);
         border-radius: 12px;
-        background: #fff;
+        background: var(--white);
         cursor: pointer;
         padding: 2px;
         display: flex;
         align-items: center;
         pointer-events: auto;
         -webkit-tap-highlight-color: transparent;
+        transition: border-color 0.35s ease, background-color 0.35s ease;
       }
       .theme-toggle-dot {
         display: block;
         width: 17px;
         height: 17px;
         border-radius: 50%;
-        background: #000;
+        background: var(--black);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-          background-color 0.3s ease;
+          background-color 0.35s ease;
       }
       .theme-toggle[aria-pressed="true"] .theme-toggle-dot {
         transform: translateX(20px);
-        background: #44aa6d;
       }
       @media (max-width: 640px) {
         .theme-toggle {
@@ -362,7 +362,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 0 var(--edge);
+        padding: 56px var(--edge) 0;
       }
       .hero-inner {
         padding-top: 64px;
@@ -441,46 +441,28 @@
         align-items: center;
       }
       .hsy-arrow-wrap {
-        display: flex;
-        align-items: center;
+        display: block;
         flex: 1 1 auto;
         min-width: 32px;
-        height: 0.5em;
-        margin: 0 0.18em;
+        height: 24px;
+        margin: 0 0.25em;
       }
-      .hsy-shaft-line {
-        display: block;
-        flex: 1 1 auto;
-        height: 4px;
-        background: var(--accent);
-        transform: scaleX(0);
-        transform-origin: left center;
-        animation: hsyDraw 0.9s 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-      }
-      .hsy-head-svg {
-        width: 15px;
-        height: 20px;
-        flex: none;
+      .hsy-arrow-svg {
+        width: 100%;
+        height: 100%;
         display: block;
         overflow: visible;
-        opacity: 0;
-        animation: hsyFade 0.2s 1.25s ease forwards;
       }
-      .hsy-head {
+      .hsy-arrow-path {
+        fill: none;
         stroke: var(--accent);
-        stroke-width: 2.5;
+        stroke-width: 3;
         stroke-linecap: round;
         stroke-linejoin: round;
-        fill: none;
       }
       .hsy-end {
         opacity: 0;
         animation: hsyFade 0.5s 1.35s ease forwards;
-      }
-      @keyframes hsyDraw {
-        to {
-          transform: scaleX(1);
-        }
       }
       @keyframes hsyFade {
         to {
@@ -554,6 +536,7 @@
         width: 100%;
         height: auto;
         overflow: visible;
+        flex-shrink: 0;
       }
       .pop-line-context {
         fill: none;
@@ -935,16 +918,16 @@
       .housing-grid {
         display: flex;
         align-items: flex-end;
-        gap: 3px;
-        height: 220px;
+        gap: 1px;
         border-bottom: 1px solid var(--line);
         padding-bottom: 0;
         margin-bottom: clamp(32px, 5vw, 56px);
         overflow: hidden;
+        flex-shrink: 0;
       }
       .hbar {
         flex: 1 1 0;
-        min-width: 2px;
+        min-width: 1px;
         background: var(--black);
         transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
       }
@@ -1339,9 +1322,12 @@
         <div class="hero-span-years">
           <span class="hsy-start">1981</span
           ><span class="hsy-arrow-wrap" aria-hidden="true"
-            ><span class="hsy-shaft-line"></span
-            ><svg class="hsy-head-svg" viewBox="0 0 16 20">
-              <path class="hsy-head" d="M2,2 L14,10 L2,18" /></svg></span
+            ><svg
+              class="hsy-arrow-svg"
+              id="hsyArrowSvg"
+              preserveAspectRatio="none"
+            >
+              <path class="hsy-arrow-path" id="hsyArrowPath" /></svg></span
           ><span class="hsy-end">2025</span>
         </div>
         <div class="hero-span-label">44 Jahre Stadtentwicklung</div>
@@ -1687,8 +1673,11 @@
       <p class="footer-note">
         St.Gallen in Daten ist ein Data-Design-Konzept. Bevölkerungszahlen
         (Gesamtstadt und Quartiergruppen) ab 2008 sind effektive Werte des Amts
-        für Daten und Statistik Kanton St.Gallen (STADTSGPOP); davor modelliert.
-        Wohnungen, Arbeitsplätze, Altersstruktur und Gebäude sind
+        für Daten und Statistik Kanton St.Gallen (STADTSGPOP). Für 1981–2007
+        existieren dort keine Werte; die Gesamtstadt-Kurve nutzt reale Eckwerte
+        aus dem Historischen Lexikon der Schweiz (1990: 75'237, 2000: 72'626)
+        und verbindet sie geradlinig, Quartierwerte sind für diese Periode
+        modelliert. Wohnungen, Arbeitsplätze, Altersstruktur und Gebäude sind
         Platzhalterdaten für dieses Portfolio-Projekt. Die Struktur ist
         vorbereitet, um weitere echte Open-Data der Stadt und des Kantons
         St.Gallen einzusetzen.
@@ -1818,11 +1807,16 @@
      REAL DATA 2008–2025: Amt für Daten und Statistik Kanton St.Gallen
      (STADTSGPOP), Jahresendbestand, published as
      B01_WBV_03_Bevoelkerungsstand-Quartiere.pdf on stadt.sg.ch.
-     1981–2007: no open data available at quartier/city level for this
-     population concept before 2008 ("Für den Zeitraum vor 2008 liegen
-     für das Bevölkerungskonzept STADTSGPOP keine Angaben vor") — this
-     span is a modelled trend anchored to the real 2008 value and is
-     drawn as a dashed line / flagged as estimated in the UI.
+     1981–2007: no open STADTSGPOP data exists for this span, but the city
+     total for 1990 (75'237) and 2000 (72'626) is documented in the
+     Historisches Lexikon der Schweiz (hls-dhs-dss.ch/de/articles/001321),
+     confirming the real, well-documented population decline of that era
+     (postwar suburbanisation / "Stadtflucht" — common to many Swiss and
+     German cities through the 1970s–90s) rather than an invented shape.
+     1981 is linearly placed between the closest real anchors (1980≈75'847
+     per worldpopulationreview's Swiss census citation, and the 1990 HLS
+     figure); the path between anchors is still a straight-line model, not
+     a year-by-year record — drawn as a dashed line / flagged in the UI.
      REAL DATA REPLACEMENT: swap POP_REAL for a fresh CSV/JSON pull from
      https://daten.sg.ch (dataset "wohnbevolkerung-nach-monat-..." or the
      yearly PDF above) to keep this current. */
@@ -1848,9 +1842,9 @@
           2025: 83843,
         };
         var popPreKeys = {
-          1981: 82300,
-          1990: 79200,
-          2000: 76600,
+          1981: 75800,
+          1990: 75237,
+          2000: 72626,
           2008: POP_REAL[2008],
         };
         var popPre = seriesFromKeyframes(popPreKeys);
@@ -1859,7 +1853,7 @@
           if (year >= DATA_REAL_FROM) {
             POP[year] = POP_REAL[year];
           } else {
-            POP[year] = Math.round(popPre[year] + noise(year, 90, 3));
+            POP[year] = Math.round(popPre[year] + noise(year, 40, 3));
           }
         });
 
@@ -2240,6 +2234,110 @@
           }
         })();
 
+        /* ---- Hero arrow: one continuous stroked SVG path (shaft + head) so the
+     head is always exactly connected to the shaft and shares its stroke
+     width — no separate elements to misalign. Width is measured in real
+     pixels via JS so the viewBox is 1:1 with rendered size and the stroke
+     never gets distorted the way preserveAspectRatio="none" would. ---- */
+        (function initHeroArrow() {
+          var wrap = document.querySelector(".hsy-arrow-wrap");
+          var svg = document.getElementById("hsyArrowSvg");
+          var path = document.getElementById("hsyArrowPath");
+          if (!wrap || !svg || !path) return;
+          var H = 24,
+            headLen = 13,
+            headHalf = 7,
+            pad = 2;
+
+          function pathFor(w) {
+            var shaftEnd = w - headLen - pad;
+            var tipX = w - pad;
+            var midY = H / 2;
+            // The shaft runs all the way to the tip (not just to the back of the
+            // arrowhead) so the horizontal centerline is always covered — an open
+            // chevron head alone leaves a real gap along the centerline between
+            // its two back corners, since the diagonals only meet at the tip.
+            return (
+              "M" +
+              pad +
+              "," +
+              midY +
+              " L" +
+              tipX +
+              "," +
+              midY +
+              " M" +
+              shaftEnd +
+              "," +
+              (midY - headHalf) +
+              " L" +
+              tipX +
+              "," +
+              midY +
+              " L" +
+              shaftEnd +
+              "," +
+              (midY + headHalf)
+            );
+          }
+
+          function build(animate) {
+            var w = Math.max(
+              wrap.getBoundingClientRect().width,
+              headLen + pad * 2 + 8
+            );
+            svg.setAttribute("viewBox", "0 0 " + w + " " + H);
+            path.setAttribute("d", pathFor(w));
+            var len = path.getTotalLength();
+            if (animate) {
+              path.style.transition = "none";
+              path.style.strokeDasharray = len;
+              path.style.strokeDashoffset = len;
+              path.getBoundingClientRect();
+              requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                  path.style.transition =
+                    "stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1)";
+                  path.style.strokeDashoffset = "0";
+                });
+              });
+            } else {
+              path.style.transition = "none";
+              path.style.strokeDasharray = "none";
+              path.style.strokeDashoffset = "0";
+            }
+          }
+
+          // Wait for webfonts to finish loading before the first measurement —
+          // "1981"/"2025" reflow when Inter Bold swaps in, and since that's a
+          // content reflow (not a viewport resize), no resize event would ever
+          // catch the resulting stale width otherwise.
+          function startDraw() {
+            build(true);
+          }
+          if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function () {
+              setTimeout(startDraw, 250);
+            });
+          } else {
+            setTimeout(startDraw, 400);
+          }
+          // Safety net: snap-correct once more shortly after, in case anything
+          // else (a late font swap, a layout shift elsewhere) moved the row
+          // after the draw already started. No animation replay, just a silent fix.
+          setTimeout(function () {
+            build(false);
+          }, 2000);
+
+          var resizeT;
+          window.addEventListener("resize", function () {
+            clearTimeout(resizeT);
+            resizeT = setTimeout(function () {
+              build(false);
+            }, 200);
+          });
+        })();
+
         /* ---- Hero typewriter: measure the exact rendered width of "In Daten_"
      so the CSS width-reveal animation lands precisely, at any viewport. ---- */
         (function initHeroTypewriter() {
@@ -2376,93 +2474,116 @@
         (function initPopulation() {
           var svg = d3.select("#popChart");
           var W = 1000,
-            H = 420,
             M = { t: 20, r: 8, b: 36, l: 8 };
-          var x = d3
-            .scaleLinear()
-            .domain([YEAR_MIN, YEAR_MAX])
-            .range([M.l, W - M.r]);
+          var H, x, yScale, lineGen, areaGen;
+          var activeArea, activeLinePre, activeLinePost, playhead, dot;
+          var fullData = YEARS.map(function (y) {
+            return [y, POP[y]];
+          });
           var minV = d3.min(YEARS, function (y) {
             return POP[y];
           });
           var maxV = d3.max(YEARS, function (y) {
             return POP[y];
           });
-          var yScale = d3
-            .scaleLinear()
-            .domain([minV - 2000, maxV + 2000])
-            .range([H - M.b, M.t]);
-
-          var lineGen = d3
-            .line()
-            .x(function (d) {
-              return x(d[0]);
-            })
-            .y(function (d) {
-              return yScale(d[1]);
-            })
-            .curve(d3.curveMonotoneX);
-          var areaGen = d3
-            .area()
-            .x(function (d) {
-              return x(d[0]);
-            })
-            .y0(H - M.b)
-            .y1(function (d) {
-              return yScale(d[1]);
-            })
-            .curve(d3.curveMonotoneX);
-          var fullData = YEARS.map(function (y) {
-            return [y, POP[y]];
-          });
-
-          svg
-            .append("path")
-            .attr("class", "pop-line-context")
-            .attr("d", lineGen(fullData));
-
-          var axisG = svg.append("g");
-          axisG
-            .append("line")
-            .attr("class", "pop-axis-line")
-            .attr("x1", M.l)
-            .attr("x2", W - M.r)
-            .attr("y1", H - M.b)
-            .attr("y2", H - M.b);
-          var ticks = [1981, 1990, 2000, 2010, 2020, 2025];
-          ticks.forEach(function (t) {
-            var g = axisG
-              .append("g")
-              .attr("class", "pop-tick")
-              .attr("transform", "translate(" + x(t) + ",0)");
-            g.append("line")
-              .attr("y1", H - M.b)
-              .attr("y2", H - M.b + 6);
-            g.append("text")
-              .attr("y", H - M.b + 22)
-              .attr("text-anchor", "middle")
-              .text(t);
-          });
-
-          var activeArea = svg.append("path").attr("class", "pop-area-active");
-          var activeLinePre = svg
-            .append("path")
-            .attr("class", "pop-line-active pre");
-          var activeLinePost = svg
-            .append("path")
-            .attr("class", "pop-line-active");
-          var playhead = svg
-            .append("line")
-            .attr("class", "pop-playhead")
-            .attr("y1", M.t)
-            .attr("y2", H - M.b);
-          var dot = svg.append("circle").attr("class", "pop-dot").attr("r", 5);
 
           var yearLabel = document.getElementById("popYearLabel");
           var valueLabel = document.getElementById("popValueLabel");
           var deltaLabel = document.getElementById("popDeltaLabel");
           var slider = document.getElementById("popSlider");
           var sourceBadge = document.getElementById("popSourceBadge");
+
+          // Target a chart height that uses most of the sticky panel's vertical
+          // budget (viewport height minus the other stacked elements), converted
+          // into viewBox units for the current rendered width — so on tall,
+          // narrow (mobile) screens the chart genuinely fills the space instead
+          // of staying stuck at a desktop-shaped aspect ratio.
+          var frameEl = document.querySelector("#s01 .chart-frame");
+          function targetH() {
+            var containerW =
+              (frameEl && frameEl.clientWidth) || window.innerWidth;
+            var chromeBudget = 230 + window.innerHeight * 0.07;
+            var desiredPx = clamp(window.innerHeight - chromeBudget, 160, 780);
+            var h = (desiredPx * W) / containerW;
+            return Math.round(clamp(h, 300, 1300));
+          }
+
+          function build() {
+            H = targetH();
+            svg.selectAll("*").remove();
+            svg.attr("viewBox", "0 0 " + W + " " + H);
+            x = d3
+              .scaleLinear()
+              .domain([YEAR_MIN, YEAR_MAX])
+              .range([M.l, W - M.r]);
+            yScale = d3
+              .scaleLinear()
+              .domain([minV - 2000, maxV + 2000])
+              .range([H - M.b, M.t]);
+            lineGen = d3
+              .line()
+              .x(function (d) {
+                return x(d[0]);
+              })
+              .y(function (d) {
+                return yScale(d[1]);
+              })
+              .curve(d3.curveMonotoneX);
+            areaGen = d3
+              .area()
+              .x(function (d) {
+                return x(d[0]);
+              })
+              .y0(H - M.b)
+              .y1(function (d) {
+                return yScale(d[1]);
+              })
+              .curve(d3.curveMonotoneX);
+
+            svg
+              .append("path")
+              .attr("class", "pop-line-context")
+              .attr("d", lineGen(fullData));
+
+            var axisG = svg.append("g");
+            axisG
+              .append("line")
+              .attr("class", "pop-axis-line")
+              .attr("x1", M.l)
+              .attr("x2", W - M.r)
+              .attr("y1", H - M.b)
+              .attr("y2", H - M.b);
+            var ticks = [1981, 1990, 2000, 2010, 2020, 2025];
+            ticks.forEach(function (t) {
+              var g = axisG
+                .append("g")
+                .attr("class", "pop-tick")
+                .attr("transform", "translate(" + x(t) + ",0)");
+              g.append("line")
+                .attr("y1", H - M.b)
+                .attr("y2", H - M.b + 6);
+              g.append("text")
+                .attr("y", H - M.b + 22)
+                .attr("text-anchor", "middle")
+                .text(t);
+            });
+
+            activeArea = svg.append("path").attr("class", "pop-area-active");
+            activeLinePre = svg
+              .append("path")
+              .attr("class", "pop-line-active pre");
+            activeLinePost = svg
+              .append("path")
+              .attr("class", "pop-line-active");
+            playhead = svg
+              .append("line")
+              .attr("class", "pop-playhead")
+              .attr("y1", M.t)
+              .attr("y2", H - M.b);
+            dot = svg.append("circle").attr("class", "pop-dot").attr("r", 5);
+
+            draw(state.year);
+          }
 
           function draw(year) {
             var data = fullData.filter(function (d) {
@@ -2507,14 +2628,26 @@
                 ? "Effektive Daten (Amt für Statistik SG)"
                 : "Vor " + DATA_REAL_FROM + ": modellierter Verlauf";
           }
-          draw(state.year);
-          onYearChange(draw);
 
+          build();
+          onYearChange(draw);
           slider.addEventListener("input", function () {
             setYear(+slider.value);
           });
-
           bindScrollScrub("s01track");
+
+          var lastH = H;
+          var resizeT;
+          window.addEventListener("resize", function () {
+            clearTimeout(resizeT);
+            resizeT = setTimeout(function () {
+              var newH = targetH();
+              if (newH !== lastH) {
+                lastH = newH;
+                build();
+              }
+            }, 200);
+          });
         })();
 
         /* ==========================================================================
@@ -2877,18 +3010,49 @@
           var maxBars = Math.ceil(H_UNITS[YEAR_MAX] / SCALE) + 4;
           var bars = [];
           var targetHeights = [];
+
+          function barMaxHeight() {
+            var chromeBudget = 300 + window.innerHeight * 0.09;
+            return Math.round(
+              clamp(window.innerHeight - chromeBudget, 140, 640)
+            );
+          }
+
+          function layoutBars() {
+            var maxH = barMaxHeight();
+            container.style.height = maxH + 10 + "px";
+            for (var i = 0; i < maxBars; i++) {
+              targetHeights[i] =
+                24 + Math.abs(Math.sin(i * 12.9898)) * (maxH - 24);
+            }
+          }
+          layoutBars();
+
           for (var i = 0; i < maxBars; i++) {
             var el = document.createElement("div");
             el.className = "hbar";
-            var h = 30 + Math.abs(Math.sin(i * 12.9898)) * 170;
-            targetHeights.push(h);
             el.style.height = "0px";
             container.appendChild(el);
             bars.push(el);
           }
 
-          function draw(year) {
+          function updateStats(year) {
             hYear.textContent = year;
+            var units = H_UNITS[year];
+            var prevUnits = H_UNITS[clamp(year - 5, YEAR_MIN, YEAR_MAX)];
+            animateNumber(hUnits, units, { duration: 350 });
+            animateNumber(hRooms, H_ROOMS[year], {
+              decimals: 1,
+              duration: 350,
+            });
+            animateNumber(hNew, Math.max(units - prevUnits, 0), {
+              duration: 350,
+              prefix: "+",
+            });
+            slider.value = year;
+          }
+
+          function updateBars(year) {
             var units = H_UNITS[year];
             var count = Math.round(units / SCALE);
             var prevUnits = H_UNITS[clamp(year - 5, YEAR_MIN, YEAR_MAX)];
@@ -2902,16 +3066,19 @@
                 visible && i >= count - Math.max(newCount, 0)
               );
             });
-            animateNumber(hUnits, units, { duration: 350 });
-            animateNumber(hRooms, H_ROOMS[year], {
-              decimals: 1,
-              duration: 350,
-            });
-            animateNumber(hNew, Math.max(units - prevUnits, 0), {
-              duration: 350,
-              prefix: "+",
-            });
-            slider.value = year;
+          }
+
+          // Bars stay at height 0 (their initial state) until the section is
+          // actually scrolled into view — otherwise draw() would already set
+          // them to their final heights before the user ever sees them, and
+          // the "grow up" animation would never be visible on first arrival.
+          var revealed = false;
+          var pendingYear = state.year;
+
+          function draw(year) {
+            updateStats(year);
+            if (revealed) updateBars(year);
+            else pendingYear = year;
           }
           draw(state.year);
           onYearChange(draw);
@@ -2919,6 +3086,29 @@
             setYear(+slider.value);
           });
           bindScrollScrub("s04track");
+
+          var housingIO = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting && !revealed) {
+                  revealed = true;
+                  updateBars(pendingYear);
+                  housingIO.disconnect();
+                }
+              });
+            },
+            { threshold: 0.15 }
+          );
+          housingIO.observe(container);
+
+          var resizeT;
+          window.addEventListener("resize", function () {
+            clearTimeout(resizeT);
+            resizeT = setTimeout(function () {
+              layoutBars();
+              if (revealed) updateBars(state.year);
+            }, 200);
+          });
         })();
 
         /* ==========================================================================
@@ -2935,11 +3125,22 @@
           var slider = document.getElementById("econSlider");
           var currentScale = 1;
 
+          // Taller cells on narrow screens give labels more room to breathe —
+          // same principle as the population chart and housing bars.
+          function computeH() {
+            var w = window.innerWidth;
+            if (w < 640) return 760;
+            if (w < 1024) return 580;
+            return 480;
+          }
+
           // Keep the SVG box in the exact W:H ratio at all times (bounded by both
           // available width and a vh budget) so preserveAspectRatio="none" never
           // has to stretch x and y by different factors — which is what was
           // squashing the text on narrow windows.
           function sizeChart() {
+            H = computeH();
+            svgEl.setAttribute("viewBox", "0 0 " + W + " " + H);
             var containerWidth = svgEl.parentElement.clientWidth;
             var chromeBudget = 320; // approx space for stats row, slider, sticky padding, margins
             var vhCap = Math.max(window.innerHeight - chromeBudget, 220);
@@ -3000,6 +3201,8 @@
               });
             merged
               .select("clipPath.econ-clip rect")
+              .transition()
+              .duration(500)
               .attr("width", function (d) {
                 return Math.max(d.x1 - d.x0, 0);
               })
@@ -3011,36 +3214,90 @@
               "Finanzen & Versicherungen": "Finanzen",
               "Gesundheit & Soziales": "Gesundheit",
               "Bildung & Wissenschaft": "Bildung",
-              "Übrige Dienstleistungen": "Dienstleistungen",
+              "Übrige Dienstleistungen": "Übrige",
             };
+            // For names whose short form still doesn't say enough, break onto a
+            // second line at a natural point instead of over-abbreviating.
+            var twoLineNames = {
+              "Industrie & Gewerbe": ["Industrie &", "Gewerbe"],
+              "Finanzen & Versicherungen": ["Finanzen &", "Versicherungen"],
+              "Gesundheit & Soziales": ["Gesundheit &", "Soziales"],
+              "Bildung & Wissenschaft": ["Bildung &", "Wissenschaft"],
+              "Übrige Dienstleistungen": ["Dienst-", "leistungen"],
+            };
+            // Rough average glyph width for this bold sans at a given font size —
+            // used to check whether a candidate label actually fits before
+            // committing to it, rather than a single fixed threshold that can't
+            // tell "Bildung" (short) from "Finanzen & Versicherungen" (long) apart.
+            function estWidth(text, fontPx) {
+              return text.length * fontPx * 0.58;
+            }
+
             merged
               .select("text.econ-label-name")
-              .attr("x", 12)
-              .attr("y", 24)
+              .attr("x", function () {
+                return (8 / currentScale).toFixed(1);
+              })
               .attr("clip-path", function (d, i) {
                 return "url(#econclip-" + i + ")";
               })
-              .style("font-size", (11 / currentScale).toFixed(1) + "px")
               .style("display", function (d) {
                 var wPx = (d.x1 - d.x0) * currentScale,
                   hPx = (d.y1 - d.y0) * currentScale;
                 return wPx > 44 && hPx > 26 ? null : "none";
               })
-              .text(function (d) {
-                var wPx = (d.x1 - d.x0) * currentScale;
-                var full = d.data.name;
-                return wPx < 160 && shortNames[full] ? shortNames[full] : full;
-              })
               .each(function (d) {
-                var t = d3.select(this).select("title");
-                if (t.empty()) t = d3.select(this).append("title");
-                t.text(d.data.name);
+                var el = d3.select(this);
+                var wPx = (d.x1 - d.x0) * currentScale;
+                var hPx = (d.y1 - d.y0) * currentScale;
+                var full = d.data.name;
+                var avail = wPx - 16;
+                var fontPx = 11;
+                var xAttr = (8 / currentScale).toFixed(1);
+                var lines;
+                var two = twoLineNames[full];
+                var shortName = shortNames[full];
+                if (estWidth(full, 11) <= avail) {
+                  lines = [full];
+                } else if (
+                  two &&
+                  hPx > 50 &&
+                  estWidth(two[0], 10) <= avail &&
+                  estWidth(two[1], 10) <= avail
+                ) {
+                  lines = two;
+                  fontPx = 10;
+                } else if (shortName && estWidth(shortName, 11) <= avail) {
+                  lines = [shortName];
+                } else if (shortName) {
+                  lines = [shortName]; // tightest fallback; clip-path keeps it clean
+                } else {
+                  lines = [full];
+                }
+                el.style(
+                  "font-size",
+                  (fontPx / currentScale).toFixed(1) + "px"
+                );
+                el.selectAll("tspan").remove();
+                var baseY = 15 / currentScale;
+                var lineGap = (fontPx * 1.2) / currentScale;
+                lines.forEach(function (line, i) {
+                  el.append("tspan")
+                    .attr("x", xAttr)
+                    .attr("y", (baseY + i * lineGap).toFixed(1))
+                    .text(line);
+                });
+                var t = el.select("title");
+                if (t.empty()) t = el.append("title");
+                t.text(full);
               });
             merged
               .select("text.econ-label-pct")
-              .attr("x", 12)
+              .attr("x", function () {
+                return (8 / currentScale).toFixed(1);
+              })
               .attr("y", function (d) {
-                return Math.min(d.y1 - d.y0, H) - 22;
+                return Math.min(d.y1 - d.y0, H) - 14 / currentScale;
               })
               .attr("clip-path", function (d, i) {
                 return "url(#econclip-" + i + ")";

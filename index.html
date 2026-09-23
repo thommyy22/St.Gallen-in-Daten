@@ -294,11 +294,11 @@
         margin-bottom: 10px;
       }
       .chapter-title {
-        font-family: var(--font-fraktur);
+        font-family: var(--font-sans);
         font-size: clamp(2.4rem, 5.8vw, 4.8rem);
-        font-weight: 400;
-        letter-spacing: 0;
-        line-height: 1.05;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        line-height: 0.98;
         margin: 0 0 0.9em 0;
       }
       .chapter-intro {
@@ -396,6 +396,7 @@
         white-space: nowrap;
         vertical-align: top;
         width: 0;
+        font-weight: 300;
         animation: heroType 1s 0.5s steps(9, end) forwards;
       }
       .tw-cursor {
@@ -437,37 +438,11 @@
         font-weight: 800;
         letter-spacing: -0.02em;
         line-height: 1;
-        display: flex;
-        align-items: center;
       }
-      .hsy-arrow-wrap {
-        display: block;
-        flex: 1 1 auto;
-        min-width: 32px;
-        height: 24px;
-        margin: 0 0.25em;
-      }
-      .hsy-arrow-svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-        overflow: visible;
-      }
-      .hsy-arrow-path {
-        fill: none;
-        stroke: var(--accent);
-        stroke-width: 3;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-      .hsy-end {
-        opacity: 0;
-        animation: hsyFade 0.5s 1.35s ease forwards;
-      }
-      @keyframes hsyFade {
-        to {
-          opacity: 1;
-        }
+      .hsy-dash {
+        color: var(--black);
+        font-weight: 400;
+        padding: 0 0.08em;
       }
       .hero-span-label {
         font-family: var(--font-mono);
@@ -1320,15 +1295,7 @@
       </div>
       <div class="hero-span">
         <div class="hero-span-years">
-          <span class="hsy-start">1981</span
-          ><span class="hsy-arrow-wrap" aria-hidden="true"
-            ><svg
-              class="hsy-arrow-svg"
-              id="hsyArrowSvg"
-              preserveAspectRatio="none"
-            >
-              <path class="hsy-arrow-path" id="hsyArrowPath" /></svg></span
-          ><span class="hsy-end">2025</span>
+          1981 <span class="hsy-dash">—</span> 2025
         </div>
         <div class="hero-span-label">44 Jahre Stadtentwicklung</div>
       </div>
@@ -2232,110 +2199,6 @@
             d.className = "col";
             el.appendChild(d);
           }
-        })();
-
-        /* ---- Hero arrow: one continuous stroked SVG path (shaft + head) so the
-     head is always exactly connected to the shaft and shares its stroke
-     width — no separate elements to misalign. Width is measured in real
-     pixels via JS so the viewBox is 1:1 with rendered size and the stroke
-     never gets distorted the way preserveAspectRatio="none" would. ---- */
-        (function initHeroArrow() {
-          var wrap = document.querySelector(".hsy-arrow-wrap");
-          var svg = document.getElementById("hsyArrowSvg");
-          var path = document.getElementById("hsyArrowPath");
-          if (!wrap || !svg || !path) return;
-          var H = 24,
-            headLen = 13,
-            headHalf = 7,
-            pad = 2;
-
-          function pathFor(w) {
-            var shaftEnd = w - headLen - pad;
-            var tipX = w - pad;
-            var midY = H / 2;
-            // The shaft runs all the way to the tip (not just to the back of the
-            // arrowhead) so the horizontal centerline is always covered — an open
-            // chevron head alone leaves a real gap along the centerline between
-            // its two back corners, since the diagonals only meet at the tip.
-            return (
-              "M" +
-              pad +
-              "," +
-              midY +
-              " L" +
-              tipX +
-              "," +
-              midY +
-              " M" +
-              shaftEnd +
-              "," +
-              (midY - headHalf) +
-              " L" +
-              tipX +
-              "," +
-              midY +
-              " L" +
-              shaftEnd +
-              "," +
-              (midY + headHalf)
-            );
-          }
-
-          function build(animate) {
-            var w = Math.max(
-              wrap.getBoundingClientRect().width,
-              headLen + pad * 2 + 8
-            );
-            svg.setAttribute("viewBox", "0 0 " + w + " " + H);
-            path.setAttribute("d", pathFor(w));
-            var len = path.getTotalLength();
-            if (animate) {
-              path.style.transition = "none";
-              path.style.strokeDasharray = len;
-              path.style.strokeDashoffset = len;
-              path.getBoundingClientRect();
-              requestAnimationFrame(function () {
-                requestAnimationFrame(function () {
-                  path.style.transition =
-                    "stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1)";
-                  path.style.strokeDashoffset = "0";
-                });
-              });
-            } else {
-              path.style.transition = "none";
-              path.style.strokeDasharray = "none";
-              path.style.strokeDashoffset = "0";
-            }
-          }
-
-          // Wait for webfonts to finish loading before the first measurement —
-          // "1981"/"2025" reflow when Inter Bold swaps in, and since that's a
-          // content reflow (not a viewport resize), no resize event would ever
-          // catch the resulting stale width otherwise.
-          function startDraw() {
-            build(true);
-          }
-          if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(function () {
-              setTimeout(startDraw, 250);
-            });
-          } else {
-            setTimeout(startDraw, 400);
-          }
-          // Safety net: snap-correct once more shortly after, in case anything
-          // else (a late font swap, a layout shift elsewhere) moved the row
-          // after the draw already started. No animation replay, just a silent fix.
-          setTimeout(function () {
-            build(false);
-          }, 2000);
-
-          var resizeT;
-          window.addEventListener("resize", function () {
-            clearTimeout(resizeT);
-            resizeT = setTimeout(function () {
-              build(false);
-            }, 200);
-          });
         })();
 
         /* ---- Hero typewriter: measure the exact rendered width of "In Daten_"
